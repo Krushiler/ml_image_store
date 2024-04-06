@@ -1,0 +1,20 @@
+name: ml_image_store_server
+description: Ml Image Store Server
+version: 1.0.0+1
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  dart_frog: ^1.0.0
+
+  ml_image_store:
+    path: ../../ml_image_store
+  postgres: ^3.1.2
+  uuid:
+
+dev_dependencies:
+  mocktail: ^1.0.0
+  test: ^1.19.2
+  very_good_analysis: ^5.1.0
