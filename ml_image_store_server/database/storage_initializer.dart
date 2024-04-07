@@ -9,7 +9,7 @@ class StorageInitializer {
         host: 'localhost',
         database: 'ml_image_store',
         username: 'postgres',
-        password: 'postgres',
+        password: 'Piston90908332',
       ),
       settings: const ConnectionSettings(sslMode: SslMode.disable),
     );

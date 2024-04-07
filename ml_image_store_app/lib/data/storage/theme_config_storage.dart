@@ -1,6 +1,11 @@
 import 'package:ml_image_store/model/theme/theme_config.dart';
-import 'package:ml_image_store_app/data/storage/base/base_storage.dart';
+import 'package:ml_image_store_app/data/storage/base/hive_json_storage.dart';
 
-class ThemeConfigStorage extends BaseStorage<ThemeConfig> {
-  ThemeConfigStorage() : super(initialData: ThemeConfig.defaultTheme());
+class ThemeConfigStorage extends HiveJsonStorage<ThemeConfig> {
+  ThemeConfigStorage()
+      : super(
+          key: 'theme_config',
+          fromJson: ThemeConfig.fromJson,
+          toJson: (e) => e.toJson(),
+        );
 }

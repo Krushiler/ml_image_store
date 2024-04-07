@@ -13,7 +13,7 @@ class ProviderModule extends StatelessWidget {
     return MultiProvider(
       providers: [
         StreamProvider<ThemeConfig>.value(
-          value: context.read<ThemeConfigStorage>().watch(),
+          value: context.read<ThemeConfigStorage>().watch().map((event) => event ?? ThemeConfig.defaultTheme()),
           initialData: ThemeConfig.defaultTheme(),
         ),
       ],

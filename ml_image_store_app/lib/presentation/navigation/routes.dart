@@ -1,5 +1,6 @@
 enum Routes {
-  auth('auth');
+  auth('auth'),
+  home('home');
 
   final String name;
 
