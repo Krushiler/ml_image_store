@@ -8,11 +8,10 @@ part 'image.g.dart';
 @freezed
 class Image with _$Image {
   const factory Image({
-    required int width,
-    required int height,
-    required Point topLeft,
-    required Point bottomRight,
-    required String url,
+    required String id,
+    required Point leftTop,
+    required Point rightBottom,
+    required String fileId,
   }) = _Image;
 
   factory Image.fromJson(Map<String, dynamic> json) => _$ImageFromJson(json);

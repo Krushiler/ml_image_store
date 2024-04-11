@@ -24,7 +24,10 @@ class AppModule extends StatelessWidget {
         /// Api
         RepositoryProvider(create: (context) => DioFactory(context.read())),
         RepositoryProvider(
-          create: (context) => MlImageApi(context.read<DioFactory>().create(), baseUrl: 'http://10.0.0.2:8080'),
+          create: (context) => MlImageApi(
+            context.read<DioFactory>().create(),
+            baseUrl: 'https://51e7-2a06-f901-1-100-00-443.ngrok-free.app/',
+          ),
         ),
 
         /// Repository

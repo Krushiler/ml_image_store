@@ -27,7 +27,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     on<_RegisterRequested>((event, emit) async {
       emit(state.copyWith(loading: true));
       try {
-        await _authInteractor.login(state.login, state.password);
+        await _authInteractor.register(state.login, state.password);
       } catch (e) {
         emit(state.copyWith(error: createErrorMessage(e)));
       }

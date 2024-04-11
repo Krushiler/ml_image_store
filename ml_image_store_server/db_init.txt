@@ -16,8 +16,10 @@ CREATE TABLE IF NOT EXISTS images(
      id TEXT NOT NULL,
      path TEXT NOT NULL,
      folderId TEXT NOT NULL,
-     leftTop imagePoint NOT NULL,
-     rightBottom imagePoint NOT NULL);
+     leftTopX int NOT NULL,
+     leftTopY int NOT NULL,
+     rightBottomX int NOT NULL,
+     rightBottomY int NOT NULL);
 
 CREATE TABLE IF NOT EXISTS folders (
     id TEXT NOT NULL,

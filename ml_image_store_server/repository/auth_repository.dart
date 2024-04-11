@@ -19,4 +19,15 @@ class AuthRepository {
     if (userRow != null) return null;
     return _storage.createUser(name, password);
   }
+
+  Future<User?> getUserByToken(String token) async {
+    try {
+      final userRow = (await _storage.getUserByToken(token))?.toColumnMap();
+      if (userRow == null) return null;
+      final user = User(id: userRow['id'].toString(), name: userRow['name'].toString());
+      return user;
+    } catch (_) {
+      return null;
+    }
+  }
 }

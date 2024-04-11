@@ -11,7 +11,7 @@ String createErrorMessage(dynamic e) {
         case DioExceptionType.connectionError:
           return 'Connection timeout';
         default:
-          return e.response?.data?['message'] ?? e.message ?? 'Something went wrong';
+          return e.response?.data?.toString() ?? 'Something went wrong';
       }
     }
     if (e is Exception) {

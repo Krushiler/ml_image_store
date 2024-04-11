@@ -22,7 +22,7 @@ Future<Response> _onPost(RequestContext context) async {
   final token = await authenticator.login(request.username, request.password);
 
   if (token == null) {
-    return Response(statusCode: HttpStatus.unauthorized);
+    return Response(statusCode: HttpStatus.unauthorized, body: 'Incorrect login or password');
   } else {
     return Response.json(body: AuthResponse(token: token).toJson());
   }

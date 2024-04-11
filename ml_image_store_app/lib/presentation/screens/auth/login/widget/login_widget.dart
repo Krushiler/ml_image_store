@@ -29,11 +29,11 @@ class _LoginWidgetState extends State<LoginWidget> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(Dimens.md).add(Dimens.system(context)),
               child: Center(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(Dimens.md),
-                    child: SizedBox(
-                      width: 600,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 600),
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(Dimens.md),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.center,

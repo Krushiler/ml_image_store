@@ -20,12 +20,23 @@ class DioFactory {
     );
     final dio = Dio(options);
 
-    dio.interceptors.add(QueuedInterceptorsWrapper(onError: (error, handler) async {
-      if (error.response?.statusCode == 401) {
-        await _authStorage.clear();
-      }
-      handler.next(error);
-    }));
+    dio.interceptors.add(
+      QueuedInterceptorsWrapper(
+        onError: (error, handler) async {
+          if (error.response?.statusCode == 401) {
+            await _authStorage.clear();
+          }
+          handler.next(error);
+        },
+        onRequest: (options, handler) async {
+          final auth = await _authStorage.get();
+          if (auth != null) {
+            options.headers['Authorization'] = 'Bearer $auth';
+          }
+          handler.next(options);
+        },
+      ),
+    );
 
     if (kDebugMode) {
       dio.interceptors.add(
