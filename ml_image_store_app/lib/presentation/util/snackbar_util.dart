@@ -4,11 +4,11 @@ import 'package:ml_image_store_app/presentation/style/theme/app_context_extensio
 
 extension SnackBarUtil on BuildContext {
   ScaffoldFeatureController<SnackBar, SnackBarClosedReason> showErrorSnackBar(
-    String message, {
+    String? message, {
     SnackBarAction? action,
   }) {
     return ScaffoldMessenger.of(this).showSnackBar(SnackBar(
-      content: Text(message),
+      content: Text(message ?? ''),
       action: action,
     ));
   }

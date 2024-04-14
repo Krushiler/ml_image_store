@@ -24,7 +24,7 @@ class _LoginWidgetState extends State<LoginWidget> {
           body: BlocListener<LoginBloc, LoginState>(
             listenWhen: (_, curr) => curr.error != null,
             listener: (context, state) {
-              context.showErrorSnackBar(state.error ?? '');
+              context.showErrorSnackBar(state.error);
             },
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(Dimens.md).add(Dimens.system(context)),

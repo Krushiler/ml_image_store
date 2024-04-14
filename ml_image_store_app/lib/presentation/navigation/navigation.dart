@@ -7,7 +7,11 @@ class Navigation {
 
   const Navigation(this.context);
 
-  void navigateToHome() => context.goNamed(Routes.home.name);
+  void navigateToHome() => context.goNamed(Routes.folders.name);
+
+  void navigateToFolder(String id) => context.goNamed(Routes.folder.name, pathParameters: {'id': id});
+
+  void navigateToImageCreation(String id) => context.goNamed(Routes.createImage.name, pathParameters: {'id': id});
 
   void navigateToAuth() => context.goNamed(Routes.auth.name);
 }

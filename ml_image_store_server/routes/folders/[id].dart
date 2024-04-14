@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
 import 'package:ml_image_store/model/auth/user.dart';
+import 'package:ml_image_store/response/folder_response.dart';
 
 import '../../repository/folders_repository.dart';
 import '../../repository/images_repository.dart';
@@ -18,9 +19,11 @@ Future<Response> onRequest(
 }
 
 Future<Response> _onGet(RequestContext context, String id) async {
+  final foldersRepository = context.read<FoldersRepository>();
+  final folder = await foldersRepository.getFolder(id);
   final repository = context.read<ImagesRepository>();
   final images = await repository.getImages(id);
-  final jsonArray = images.map((e) => e.toJson()).toList();
+  final jsonArray = FolderResponse(images: images, folder: folder);
   return Response.json(body: jsonArray);
 }
 
