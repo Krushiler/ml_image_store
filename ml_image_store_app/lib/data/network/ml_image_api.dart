@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'package:ml_image_store/model/folder/folder.dart';
 import 'package:ml_image_store/model/image/image.dart';
@@ -42,8 +40,8 @@ abstract class MlImageApi {
   @MultiPart()
   Future<void> createImage({
     @Part(name: 'folderId') required String folderId,
-    @Part(name: 'leftTop') required Map<String, dynamic> leftTop,
-    @Part(name: 'rightBottom') required Map<String, dynamic> rightBottom,
+    @Part(name: 'leftTop') required String leftTop,
+    @Part(name: 'rightBottom') required String rightBottom,
     @Part(name: 'image') required List<MultipartFile> image,
   });
 

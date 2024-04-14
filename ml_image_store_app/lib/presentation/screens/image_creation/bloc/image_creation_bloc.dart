@@ -59,7 +59,7 @@ class ImageCreationBloc extends Bloc<ImageCreationEvent, ImageCreationState> {
           prevState.rightBottom!,
           prevState.image,
         );
-        _foldersRepository.fetchFolders();
+        _foldersRepository.fetchFolder(state.folderId);
         emit(ImageCreationState.created(folderId: state.folderId));
       } catch (e) {
         emit(prevState.copyWith(error: createErrorMessage(e), sending: false));

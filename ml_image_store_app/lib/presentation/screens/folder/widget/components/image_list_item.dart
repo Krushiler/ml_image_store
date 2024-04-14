@@ -1,8 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:ml_image_store/model/image/image.dart' as domain;
 import 'package:ml_image_store_app/presentation/style/kit/dimens.dart';
 import 'package:ml_image_store_app/presentation/style/theme/app_context_extension.dart';
+import 'package:ml_image_store_app/presentation/util/image_util.dart';
 import 'package:ml_image_store_app/presentation/widgets/button/clickable_box.dart';
-import 'package:ml_image_store/model/image/image.dart' as domain;
 
 class ImageListItem extends StatefulWidget {
   final domain.Image image;
@@ -15,7 +17,7 @@ class ImageListItem extends StatefulWidget {
 }
 
 class _ImageListItemState extends State<ImageListItem> with TickerProviderStateMixin {
-  late OverlayEntry overlayEntry;
+  OverlayEntry? overlayEntry;
   final link = LayerLink();
 
   late final AnimationController animator;
@@ -26,16 +28,12 @@ class _ImageListItemState extends State<ImageListItem> with TickerProviderStateM
 
     animator = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      overlayEntry = _createOverlay(context);
-    });
-
     animator.addListener(() {
-      if (animator.isDismissed && overlayEntry.mounted) {
-        overlayEntry.remove();
-      } else if (!overlayEntry.mounted) {
+      if (animator.isDismissed && overlayEntry?.mounted == true) {
+        overlayEntry?.remove();
+      } else if (!(overlayEntry?.mounted ?? false)) {
         overlayEntry = _createOverlay(context);
-        Overlay.of(context).insert(overlayEntry);
+        Overlay.of(context).insert(overlayEntry!);
       }
     });
   }
@@ -50,13 +48,21 @@ class _ImageListItemState extends State<ImageListItem> with TickerProviderStateM
         onLongPress: () {
           animator.forward();
         },
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(Dimens.sm),
-            border: Border.all(color: context.colors.primary),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(Dimens.sm),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(Dimens.sm),
+              border: Border.all(color: context.colors.primary),
+            ),
+            child: CachedNetworkImage(
+              imageUrl: createImageUrl(context, widget.image.fileId),
+              progressIndicatorBuilder: (context, url, progress) => Padding(
+                padding: const EdgeInsets.all(Dimens.md),
+                child: CircularProgressIndicator(value: progress.progress),
+              ),
+            ),
           ),
-          padding: const EdgeInsets.all(Dimens.sm),
-          child: Image.network(''),
         ),
       ),
     );

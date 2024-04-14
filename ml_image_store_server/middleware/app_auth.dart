@@ -11,7 +11,7 @@ Middleware appAuth() {
       return repo.getUserByToken(token);
     },
     applies: (context) async {
-      if (context.request.url.pathSegments[0] == 'auth') {
+      if (context.request.url.pathSegments[0] == 'auth' || context.request.url.pathSegments[0] == 'files') {
         return false;
       }
       return true;

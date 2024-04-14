@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -19,9 +20,9 @@ class ImagesRepository {
   ) {
     return _api.createImage(
       folderId: folderId,
-      leftTop: leftTop.toJson(),
-      rightBottom: rightBottom.toJson(),
-      image: [MultipartFile.fromBytes(image, contentType: MediaType('image', 'png'))],
+      leftTop: jsonEncode(leftTop.toJson()),
+      rightBottom: jsonEncode(rightBottom.toJson()),
+      image: [MultipartFile.fromBytes(image, contentType: MediaType('image', 'png'), filename: 'image.png')],
     );
   }
 

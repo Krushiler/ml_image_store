@@ -11,7 +11,7 @@ void main() async {
   final AuthStorage storage = AuthStorage();
   final isAuthorized = (await storage.get()) != null;
 
-  const serverConfig = ServerConfig(baseUrl: 'http://192.168.0.104:8080');
+  const serverConfig = ServerConfig(baseUrl: 'https://7c5b-2a06-f901-1-100-00-443.ngrok-free.app');
 
   runApp(App(isAuthorized: isAuthorized, serverConfig: serverConfig));
 }
