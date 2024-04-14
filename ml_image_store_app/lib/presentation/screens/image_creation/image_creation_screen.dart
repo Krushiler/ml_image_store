@@ -11,7 +11,7 @@ class ImageCreationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<ImageCreationBloc>(
-      create: (context) => ImageCreationBloc(folderId),
+      create: (context) => ImageCreationBloc(folderId, context.read(), context.read()),
       child: const ImageCreationWidget(),
     );
   }

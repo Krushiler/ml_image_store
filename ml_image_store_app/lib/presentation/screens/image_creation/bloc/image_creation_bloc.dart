@@ -3,11 +3,18 @@ import 'dart:typed_data';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:ml_image_store/model/image/point.dart';
+import 'package:ml_image_store_app/data/repository/folders_repository.dart';
+import 'package:ml_image_store_app/data/repository/images_repository.dart';
+import 'package:ml_image_store_app/presentation/util/error_util.dart';
 
 part 'image_creation_bloc.freezed.dart';
 
 class ImageCreationBloc extends Bloc<ImageCreationEvent, ImageCreationState> {
-  ImageCreationBloc(final String folderId) : super(ImageCreationState.pickingImage(folderId: folderId)) {
+  final ImagesRepository _imagesRepository;
+  final FoldersRepository _foldersRepository;
+
+  ImageCreationBloc(final String folderId, this._imagesRepository, this._foldersRepository)
+      : super(ImageCreationState.pickingImage(folderId: folderId)) {
     on<_Started>((event, emit) {});
     on<_ImagePicked>((event, emit) {
       emit(ImageCreationState.pickingImage(folderId: state.folderId, image: event.image));
@@ -16,7 +23,7 @@ class ImageCreationBloc extends Bloc<ImageCreationEvent, ImageCreationState> {
       if (state is! PickingState) return;
       final prevState = state as PickingState;
       if (prevState.image == null) return;
-      emit(ImageCreationState.editingImage(folderId: folderId, image: prevState.image!));
+      emit(ImageCreationState.editingImage(folderId: state.folderId, image: prevState.image!));
     });
     on<_LeftTopChanged>((event, emit) {
       if (state is! EditingState) return;
@@ -36,7 +43,27 @@ class ImageCreationBloc extends Bloc<ImageCreationEvent, ImageCreationState> {
     on<_BackToPickRequested>((event, emit) {
       if (state is! EditingState) return;
       final prevState = state as EditingState;
-      emit(ImageCreationState.pickingImage(folderId: folderId, image: prevState.image));
+      emit(ImageCreationState.pickingImage(folderId: state.folderId, image: prevState.image));
+    });
+    on<_SendRequested>((event, emit) async {
+      if (state is! EditingState) return;
+      final prevState = state as EditingState;
+      if (prevState.leftTop == null || prevState.rightBottom == null) {
+        return;
+      }
+      emit(prevState.copyWith(sending: true));
+      try {
+        await _imagesRepository.createImage(
+          state.folderId,
+          prevState.leftTop!,
+          prevState.rightBottom!,
+          prevState.image,
+        );
+        _foldersRepository.fetchFolders();
+        emit(ImageCreationState.created(folderId: state.folderId));
+      } catch (e) {
+        emit(prevState.copyWith(error: createErrorMessage(e), sending: false));
+      }
     });
   }
 }
@@ -53,7 +80,8 @@ class ImageCreationState with _$ImageCreationState {
     required Uint8List image,
     Point? leftTop,
     Point? rightBottom,
-    @Default(false) bool firstEnter,
+    @Default(false) bool sending,
+    String? error,
   }) = EditingState;
 
   const factory ImageCreationState.created({
@@ -76,4 +104,6 @@ class ImageCreationEvent with _$ImageCreationEvent {
   const factory ImageCreationEvent.pointsCleared() = _PointsCleared;
 
   const factory ImageCreationEvent.backToPickRequested() = _BackToPickRequested;
+
+  const factory ImageCreationEvent.sendRequested() = _SendRequested;
 }

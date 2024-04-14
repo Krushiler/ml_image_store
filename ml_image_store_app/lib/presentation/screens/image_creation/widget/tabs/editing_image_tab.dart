@@ -68,82 +68,97 @@ class _EditingImageTabState extends State<EditingImageTab> {
           _createImage(state);
         }
         return SafeArea(
-          child: Column(
+          child: Stack(
             children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(Dimens.md),
-                  child: image != null
-                      ? GestureDetector(
-                          onPanStart: (event) {
-                            if (canvasSize == null) return;
-                            double x = (event.localPosition.dx - leftOffset) * imageWidthRatio;
-                            double y = (event.localPosition.dy - topOffset) * imageHeightRatio;
-                            context.read<ImageCreationBloc>().add(ImageCreationEvent.leftTopChanged(
-                                  Point(x: x.toInt(), y: y.toInt()),
-                                ));
-                          },
-                          onPanUpdate: (event) {
-                            if (canvasSize == null) return;
-                            double x = (event.localPosition.dx - leftOffset) * imageWidthRatio;
-                            double y = (event.localPosition.dy - topOffset) * imageHeightRatio;
-                            context.read<ImageCreationBloc>().add(
-                                  ImageCreationEvent.rightBottomChanged(
-                                    Point(x: x.toInt(), y: y.toInt()),
-                                  ),
-                                );
-                          },
-                          child: CustomPaint(
-                            painter: ImagePainter(
-                              image!,
-                              state.leftTop,
-                              state.rightBottom,
-                              size: canvasSize,
-                              sizeChanged: (size) {
-                                canvasSize = size;
+              Column(
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(Dimens.md),
+                      child: image != null
+                          ? GestureDetector(
+                              onPanStart: (event) {
+                                if (state.sending) return;
+                                if (canvasSize == null) return;
+                                double x = (event.localPosition.dx - leftOffset) * imageWidthRatio;
+                                double y = (event.localPosition.dy - topOffset) * imageHeightRatio;
+                                context.read<ImageCreationBloc>().add(ImageCreationEvent.leftTopChanged(
+                                      Point(x: x.toInt(), y: y.toInt()),
+                                    ));
                               },
+                              onPanUpdate: (event) {
+                                if (state.sending) return;
+                                if (canvasSize == null) return;
+                                double x = (event.localPosition.dx - leftOffset) * imageWidthRatio;
+                                double y = (event.localPosition.dy - topOffset) * imageHeightRatio;
+                                context.read<ImageCreationBloc>().add(
+                                      ImageCreationEvent.rightBottomChanged(
+                                        Point(x: x.toInt(), y: y.toInt()),
+                                      ),
+                                    );
+                              },
+                              child: CustomPaint(
+                                painter: ImagePainter(
+                                  image!,
+                                  state.leftTop,
+                                  state.rightBottom,
+                                  size: canvasSize,
+                                  sizeChanged: (size) {
+                                    canvasSize = size;
+                                  },
+                                ),
+                                child: const SizedBox.expand(),
+                              ),
+                            )
+                          : const Center(
+                              child: CircularProgressIndicator(),
                             ),
-                            child: const SizedBox.expand(),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: Dimens.md, left: Dimens.md, right: Dimens.md),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: !state.sending
+                                ? () {
+                                    context
+                                        .read<ImageCreationBloc>()
+                                        .add(const ImageCreationEvent.backToPickRequested());
+                                  }
+                                : null,
+                            child: const Text('Back'),
                           ),
-                        )
-                      : const Center(
-                          child: CircularProgressIndicator(),
                         ),
-                ),
+                        Gap.md,
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: !state.sending && state.leftTop != null && state.rightBottom != null
+                                ? () {
+                                    context.read<ImageCreationBloc>().add(const ImageCreationEvent.pointsCleared());
+                                  }
+                                : null,
+                            child: const Text('Clear'),
+                          ),
+                        ),
+                        Gap.md,
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: !state.sending && state.leftTop != null && state.rightBottom != null
+                                ? () {
+                                    context.read<ImageCreationBloc>().add(const ImageCreationEvent.sendRequested());
+                                  }
+                                : null,
+                            child: const Text('Send'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                ],
               ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: Dimens.md, left: Dimens.md, right: Dimens.md),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          context.read<ImageCreationBloc>().add(const ImageCreationEvent.backToPickRequested());
-                        },
-                        child: const Text('Back'),
-                      ),
-                    ),
-                    Gap.md,
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: state.leftTop != null || state.rightBottom != null
-                            ? () {
-                                context.read<ImageCreationBloc>().add(const ImageCreationEvent.pointsCleared());
-                              }
-                            : null,
-                        child: const Text('Clear'),
-                      ),
-                    ),
-                    Gap.md,
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: state.leftTop != null && state.rightBottom != null ? () {} : null,
-                        child: const Text('Send'),
-                      ),
-                    ),
-                  ],
-                ),
-              )
+              if (state.sending) const Center(child: CircularProgressIndicator()),
             ],
           ),
         );
