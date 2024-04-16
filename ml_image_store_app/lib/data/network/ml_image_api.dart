@@ -45,7 +45,7 @@ abstract class MlImageApi {
     @Part(name: 'image') required List<MultipartFile> image,
   });
 
-  @POST('/images/{id}')
+  @GET('/images/{id}')
   Future<Image> getImage(@Path('id') String id);
 
   @DELETE('/images/{id}')

@@ -7,7 +7,7 @@ END$$;
 
 CREATE TABLE IF NOT EXISTS users (
     id TEXT NOT NULL,
-    name TEXT NOT NULL,
+    name TEXT NOT NULL,\
     password TEXT NOT NULL,
     token TEXT NOT NULL
     );

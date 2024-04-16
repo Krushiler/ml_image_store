@@ -2,7 +2,9 @@ enum Routes {
   auth('auth'),
   folders('folders'),
   folder('folder'),
-  createImage('createImage');
+  createImage('createImage'),
+  image('image'),
+  ;
 
   final String name;
 

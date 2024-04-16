@@ -9,8 +9,9 @@ import 'package:ml_image_store_app/presentation/widgets/button/clickable_box.dar
 class ImageListItem extends StatefulWidget {
   final domain.Image image;
   final VoidCallback? onDeletePressed;
+  final VoidCallback? onPressed;
 
-  const ImageListItem({super.key, required this.image, this.onDeletePressed});
+  const ImageListItem({super.key, required this.image, this.onDeletePressed, this.onPressed});
 
   @override
   State<ImageListItem> createState() => _ImageListItemState();
@@ -44,7 +45,9 @@ class _ImageListItemState extends State<ImageListItem> with TickerProviderStateM
       link: link,
       child: InkWell(
         borderRadius: BorderRadius.circular(Dimens.sm),
-        onTap: () {},
+        onTap: () {
+          widget.onPressed?.call();
+        },
         onLongPress: () {
           animator.forward();
         },

@@ -46,9 +46,10 @@ dependencies:
   cached_network_image: ^3.3.0
   image_picker: ^1.0.8
   http_parser:
+  url_launcher: ^6.2.6
 
   ml_image_store:
-    path: ../../ml_image_store
+    path: ../ml_image_store
 
 
 dev_dependencies:

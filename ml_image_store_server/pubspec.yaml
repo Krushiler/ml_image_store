@@ -7,11 +7,12 @@ environment:
   sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
+  archive: ^3.4.10
   dart_frog: ^1.0.0
   dart_frog_auth: ^1.1.0
 
   ml_image_store:
-    path: ../../ml_image_store
+    path: ../ml_image_store
   postgres: ^3.1.2
   uuid:
 

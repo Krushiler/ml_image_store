@@ -4,8 +4,8 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:ml_image_store/model/auth/user.dart';
 import 'package:ml_image_store/response/folder_response.dart';
 
-import '../../repository/folders_repository.dart';
-import '../../repository/images_repository.dart';
+import '../../../repository/folders_repository.dart';
+import '../../../repository/images_repository.dart';
 
 Future<Response> onRequest(
   RequestContext context,

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ml_image_store_app/data/model/server_config.dart';
 import 'package:ml_image_store_app/presentation/navigation/navigation.dart';
 import 'package:ml_image_store_app/presentation/screens/folder/bloc/folder_bloc.dart';
 import 'package:ml_image_store_app/presentation/screens/folder/widget/components/image_list_item.dart';
 import 'package:ml_image_store_app/presentation/style/kit/dimens.dart';
 import 'package:ml_image_store_app/presentation/style/theme/app_context_extension.dart';
 import 'package:ml_image_store_app/presentation/util/snackbar_util.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class FolderWidget extends StatefulWidget {
   const FolderWidget({super.key});
@@ -41,6 +43,16 @@ class _FolderWidgetState extends State<FolderWidget> {
                 onPressed: () => context.pop(),
                 icon: const Icon(Icons.arrow_back),
               ),
+              actions: [
+                if (state.folder != null)
+                  IconButton(
+                    onPressed: () {
+                      launchUrl(
+                          Uri.parse('${context.read<ServerConfig>().baseUrl}/folders/${state.folder?.id}/download'));
+                    },
+                    icon: const Icon(Icons.download),
+                  ),
+              ],
             ),
             body: Stack(
               children: [
@@ -54,6 +66,9 @@ class _FolderWidgetState extends State<FolderWidget> {
                   itemCount: state.images.length,
                   itemBuilder: (context, index) => ImageListItem(
                     image: state.images[index],
+                    onPressed: () {
+                      context.navigation.navigateToImage(state.folderId, state.images[index].id);
+                    },
                     onDeletePressed: () {
                       context.read<FolderBloc>().add(FolderEvent.deleteImageRequested(state.images[index].id));
                     },
