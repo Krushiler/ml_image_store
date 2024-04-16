@@ -11,7 +11,7 @@ void main() async {
   final AuthStorage storage = AuthStorage();
   final isAuthorized = (await storage.get()) != null;
 
-  const serverConfig = ServerConfig(baseUrl: 'https://60af-2a06-f901-1-100-00-443.ngrok-free.app');
+  const serverConfig = ServerConfig(baseUrl: 'https://ml-store-backend.powerofpoint.online');
 
   runApp(App(isAuthorized: isAuthorized, serverConfig: serverConfig));
 }
