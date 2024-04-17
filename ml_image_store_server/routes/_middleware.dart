@@ -12,11 +12,5 @@ Handler middleware(Handler handler) {
       .use(authMiddlewareProvider())
       .use(foldersMiddlewareProvider())
       .use(storageMiddlewareProvider())
-      .use(
-        fromShelfMiddleware(
-          corsHeaders(
-            headers: {ACCESS_CONTROL_ALLOW_ORIGIN: '*'},
-          ),
-        ),
-      );
+      .use(fromShelfMiddleware(corsHeaders()));
 }
