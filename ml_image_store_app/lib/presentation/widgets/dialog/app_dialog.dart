@@ -15,6 +15,7 @@ class AppDialog extends StatelessWidget {
         borderRadius: BorderRadius.circular(Dimens.sm),
       ),
       child: Container(
+        constraints: const BoxConstraints(maxWidth: 400),
         padding: const EdgeInsets.all(Dimens.md),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(Dimens.sm),

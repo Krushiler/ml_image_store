@@ -7,18 +7,16 @@ import '../middleware/providers.dart';
 Handler middleware(Handler handler) {
   return handler
       .use(requestLogger())
-      .use(
-        fromShelfMiddleware(
-          corsHeaders(
-            headers: {
-              ACCESS_CONTROL_ALLOW_ORIGIN: '*'
-            },
-          ),
-        ),
-      )
       .use(appAuth())
       .use(imagesMiddlewareProvider())
       .use(authMiddlewareProvider())
       .use(foldersMiddlewareProvider())
-      .use(storageMiddlewareProvider());
+      .use(storageMiddlewareProvider())
+      .use(
+        fromShelfMiddleware(
+          corsHeaders(
+            headers: {ACCESS_CONTROL_ALLOW_ORIGIN: '*'},
+          ),
+        ),
+      );
 }
