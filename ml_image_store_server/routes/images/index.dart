@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dart_frog/dart_frog.dart';
+import 'package:ml_image_store/model/image/feature.dart';
 import 'package:ml_image_store/model/image/point.dart';
 import 'package:uuid/uuid.dart';
 
@@ -26,8 +27,7 @@ Future<Response> _onPost(RequestContext context) async {
   await repository.createImage(
     data.fields['folderId']!,
     fileName,
-    Point.fromJson(jsonDecode(data.fields['leftTop']!) as Map<String, dynamic>),
-    Point.fromJson(jsonDecode(data.fields['rightBottom']!) as Map<String, dynamic>),
+    (jsonDecode(data.fields['features']!) as List<Map<String, dynamic>>).map(Feature.fromJson).toList(),
   );
   return Response();
 }

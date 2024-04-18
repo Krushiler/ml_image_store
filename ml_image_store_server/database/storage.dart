@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:ml_image_store/model/image/feature.dart';
 import 'package:postgres/postgres.dart';
 import 'package:uuid/uuid.dart';
 
 import 'storage_initializer.dart';
+
 import 'package:ml_image_store/model/image/point.dart' as domain;
 
 class Storage {
@@ -55,6 +57,34 @@ class Storage {
       });
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<List<ResultRow>> getFeatures(String imageId) async {
+    try {
+      return execute((conn) async {
+        final rows = await conn.execute(
+          r'SELECT * FROM features WHERE imageId=$1',
+          parameters: [imageId],
+        );
+        return rows;
+      });
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<ResultRow>> getPoints(String featureId) async {
+    try {
+      return execute((conn) async {
+        final rows = await conn.execute(
+          r'SELECT * FROM points WHERE featureId=$1',
+          parameters: [featureId],
+        );
+        return rows;
+      });
+    } catch (_) {
+      return [];
     }
   }
 
@@ -140,15 +170,38 @@ INSERT INTO folders (id, name, ownerId)
           r'''DELETE FROM folders WHERE id=$1''',
           parameters: [id],
         );
-        await conn.execute(
-          r'''DELETE FROM images WHERE folderId=$1''',
-          parameters: [id],
-        );
         return rows.affectedRows;
       });
     } catch (_) {
       return 0;
     }
+  }
+
+  Future<void> deleteFolderImages(String folder) {
+    return execute((conn) async {
+      await conn.execute(
+        r'''DELETE FROM images WHERE folderId=$1''',
+        parameters: [folder],
+      );
+    });
+  }
+
+  Future<void> deleteFeaturePoints(String featureId) {
+    return execute((conn) async {
+      await conn.execute(
+        r'''DELETE FROM points WHERE featureId=$1''',
+        parameters: [featureId],
+      );
+    });
+  }
+
+  Future<void> deleteImageFeatures(String imageId) {
+    return execute((conn) async {
+      await conn.execute(
+        r'''DELETE FROM features WHERE imageId=$1''',
+        parameters: [imageId],
+      );
+    });
   }
 
   Future<void> deleteImage(String id) {
@@ -164,23 +217,58 @@ INSERT INTO folders (id, name, ownerId)
     String id,
     String path,
     String folderId,
-    domain.Point leftTop,
-    domain.Point rightBottom,
   ) {
     return execute((conn) async {
       await conn.execute(
         r'''
-INSERT INTO images (id, path, folderId, leftTopX, leftTopY, rightBottomX, rightBottomY)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO images (id, path, folderId)
+      VALUES ($1, $2, $3)
       ''',
         parameters: [
           id,
           path,
           folderId,
-          leftTop.x,
-          leftTop.y,
-          rightBottom.x,
-          rightBottom.y,
+        ],
+      );
+    });
+  }
+
+  Future<void> createFeature(
+    String id,
+    String imageId,
+    Feature feature,
+  ) {
+    return execute((conn) async {
+      await conn.execute(
+        r'''
+INSERT INTO features (id, imageId, classname)
+      VALUES ($1, $2, $3)
+      ''',
+        parameters: [
+          id,
+          imageId,
+          feature.className,
+        ],
+      );
+    });
+  }
+
+  Future<void> createPoint(
+    String id,
+    String featureId,
+    domain.Point point,
+  ) {
+    return execute((conn) async {
+      await conn.execute(
+        r'''
+INSERT INTO points (id, featureId, leftTopX, leftTopY)
+      VALUES ($1, $2, $3)
+      ''',
+        parameters: [
+          id,
+          featureId,
+          point.x,
+          point.y,
         ],
       );
     });

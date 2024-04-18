@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive_io.dart' as archive;
@@ -36,7 +37,7 @@ Future<Response> _onGet(RequestContext context, String id) async {
     final bytes = File('./uploads/${image.fileId}.png').readAsBytesSync();
     encoder.addArchiveFile(archive.ArchiveFile('image-$i.png', 0, bytes));
 
-    final pointsData = '${image.leftTop.x} ${image.leftTop.y}\n${image.rightBottom.x} ${image.rightBottom.y}';
+    final pointsData = jsonEncode(image.features);
     encoder.addArchiveFile(archive.ArchiveFile('points-$i.dat', 0, pointsData));
   }
 

@@ -1,13 +1,19 @@
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'imagepoint') THEN
-        CREATE TYPE imagePoint AS (x int, y int);
-    END IF;
-END$$;
+CREATE TABLE IF NOT EXISTS points (
+    id TEXT NOT NULL,
+    leftTopX int NOT NULL,
+    leftTopY int NOT NULL,
+    featureId TEXT NOT NULL,
+    );
+
+CREATE TABLE IF NOT EXISTS features (
+    id TEXT NOT NULL,
+    classname TEXT NOT NULL,
+    imageId TEXT NOT NULL,
+    );
 
 CREATE TABLE IF NOT EXISTS users (
     id TEXT NOT NULL,
-    name TEXT NOT NULL,\
+    name TEXT NOT NULL,
     password TEXT NOT NULL,
     token TEXT NOT NULL
     );
@@ -16,10 +22,7 @@ CREATE TABLE IF NOT EXISTS images(
      id TEXT NOT NULL,
      path TEXT NOT NULL,
      folderId TEXT NOT NULL,
-     leftTopX int NOT NULL,
-     leftTopY int NOT NULL,
-     rightBottomX int NOT NULL,
-     rightBottomY int NOT NULL);
+     );
 
 CREATE TABLE IF NOT EXISTS folders (
     id TEXT NOT NULL,

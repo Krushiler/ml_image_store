@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
-import 'package:ml_image_store/model/image/image.dart';
-import 'package:ml_image_store/model/image/point.dart';
-import 'package:ml_image_store_app/data/network/ml_image_api.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:ml_image_store/model/image/feature.dart';
+import 'package:ml_image_store/model/image/image.dart';
+import 'package:ml_image_store_app/data/network/ml_image_api.dart';
 
 class ImagesRepository {
   final MlImageApi _api;
@@ -14,14 +14,12 @@ class ImagesRepository {
 
   Future<void> createImage(
     String folderId,
-    Point leftTop,
-    Point rightBottom,
+    List<Feature> features,
     Uint8List image,
   ) {
     return _api.createImage(
       folderId: folderId,
-      leftTop: jsonEncode(leftTop.toJson()),
-      rightBottom: jsonEncode(rightBottom.toJson()),
+      features: jsonEncode(features),
       image: [MultipartFile.fromBytes(image, contentType: MediaType('image', 'png'), filename: 'image.png')],
     );
   }

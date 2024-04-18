@@ -1,13 +1,14 @@
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ml_image_store/model/image/feature.dart';
 import 'package:ml_image_store/model/image/point.dart';
 import 'package:ml_image_store_app/presentation/screens/image_creation/bloc/image_creation_bloc.dart';
 import 'package:ml_image_store_app/presentation/style/kit/dimens.dart';
 import 'package:ml_image_store_app/presentation/style/kit/gap.dart';
 import 'package:ml_image_store_app/presentation/widgets/image_painter.dart';
-import 'dart:ui' as ui;
 
 // TODO: Refactor
 
@@ -21,6 +22,9 @@ class EditingImageTab extends StatefulWidget {
 class _EditingImageTabState extends State<EditingImageTab> {
   ui.Image? image;
   ui.Size? canvasSize;
+
+  final List<Point> points = [];
+
   bool createdImage = false;
 
   double get aspectRatio => (image?.width ?? 1) / (image?.height ?? 1);
@@ -53,6 +57,8 @@ class _EditingImageTabState extends State<EditingImageTab> {
     });
   }
 
+  final nameTextController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ImageCreationBloc, ImageCreationState>(
@@ -82,26 +88,15 @@ class _EditingImageTabState extends State<EditingImageTab> {
                                 if (canvasSize == null) return;
                                 double x = (event.localPosition.dx - leftOffset) * imageWidthRatio;
                                 double y = (event.localPosition.dy - topOffset) * imageHeightRatio;
-                                context.read<ImageCreationBloc>().add(ImageCreationEvent.leftTopChanged(
-                                      Point(x: x.toInt(), y: y.toInt()),
-                                    ));
-                              },
-                              onPanUpdate: (event) {
-                                if (state.sending) return;
-                                if (canvasSize == null) return;
-                                double x = (event.localPosition.dx - leftOffset) * imageWidthRatio;
-                                double y = (event.localPosition.dy - topOffset) * imageHeightRatio;
-                                context.read<ImageCreationBloc>().add(
-                                      ImageCreationEvent.rightBottomChanged(
-                                        Point(x: x.toInt(), y: y.toInt()),
-                                      ),
-                                    );
+                                setState(() {
+                                  points.add(Point(x: x.toInt(), y: y.toInt()));
+                                });
                               },
                               child: CustomPaint(
                                 painter: ImagePainter(
                                   image!,
-                                  state.leftTop,
-                                  state.rightBottom,
+                                  state.features,
+                                  points: points,
                                   size: canvasSize,
                                   sizeChanged: (size) {
                                     canvasSize = size;
@@ -113,6 +108,45 @@ class _EditingImageTabState extends State<EditingImageTab> {
                           : const Center(
                               child: CircularProgressIndicator(),
                             ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: Dimens.md, right: Dimens.md, bottom: Dimens.md),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            nameTextController.clear();
+                            setState(() {
+                              points.clear();
+                            });
+                          },
+                          icon: const Icon(Icons.clear),
+                        ),
+                        Gap.md,
+                        Expanded(
+                          child: TextFormField(
+                            controller: nameTextController,
+                            decoration: const InputDecoration(labelText: 'Feature name'),
+                          ),
+                        ),
+                        Gap.md,
+                        IconButton(
+                          onPressed: points.isNotEmpty
+                              ? () {
+                                  context.read<ImageCreationBloc>().add(ImageCreationEvent.addFeature(
+                                        Feature(points: points.toList(), className: nameTextController.text),
+                                      ));
+                                  nameTextController.clear();
+                                  setState(() {
+                                    points.clear();
+                                  });
+                                }
+                              : null,
+                          icon: const Icon(Icons.add),
+                        ),
+                      ],
                     ),
                   ),
                   Padding(
@@ -134,7 +168,7 @@ class _EditingImageTabState extends State<EditingImageTab> {
                         Gap.md,
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: !state.sending && state.leftTop != null && state.rightBottom != null
+                            onPressed: !state.sending && state.features.isNotEmpty
                                 ? () {
                                     context.read<ImageCreationBloc>().add(const ImageCreationEvent.pointsCleared());
                                   }
@@ -145,7 +179,7 @@ class _EditingImageTabState extends State<EditingImageTab> {
                         Gap.md,
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: !state.sending && state.leftTop != null && state.rightBottom != null
+                            onPressed: !state.sending
                                 ? () {
                                     context.read<ImageCreationBloc>().add(const ImageCreationEvent.sendRequested());
                                   }

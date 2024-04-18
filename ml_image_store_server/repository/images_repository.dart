@@ -1,3 +1,4 @@
+import 'package:ml_image_store/model/image/feature.dart';
 import 'package:ml_image_store/model/image/image.dart';
 import 'package:ml_image_store/model/image/point.dart';
 import 'package:uuid/uuid.dart';
@@ -12,37 +13,61 @@ class ImagesRepository {
   Future<void> createImage(
     String folderId,
     String filePath,
-    Point leftTop,
-    Point rightBottom,
+    List<Feature> features,
   ) async {
     final id = const Uuid().v4();
-    await _storage.createImage(id, filePath, folderId, leftTop, rightBottom);
+    await _storage.createImage(id, filePath, folderId);
+    for (final feature in features) {
+      final featureId = const Uuid().v4();
+      await _storage.createFeature(featureId, id, feature);
+      for (final point in feature.points) {
+        await _storage.createPoint(id, featureId, point);
+      }
+    }
   }
 
   Future<void> deleteImage(
     String id,
   ) async {
+    final features = (await _storage.getFeatures(id)).map((e) => e.toColumnMap());
+    for (final feature in features) {
+      await _storage.deleteFeaturePoints(feature['id'].toString());
+    }
+    await _storage.deleteImageFeatures(id);
     await _storage.deleteImage(id);
+  }
+
+  Future<List<Feature>> getFeatures(String imageId) async {
+    final features = await _storage.getFeatures(imageId);
+    final res = <Feature>[];
+    for (final feature in features) {
+      final map = feature.toColumnMap();
+      final pointsRes = await _storage.getPoints(map['id'].toString());
+      final points = <Point>[];
+      for (final p in pointsRes) {
+        final e = p.toColumnMap();
+        points.add(Point(x: int.parse(e['lefttopx'].toString()), y: int.parse(e['lefttopy'].toString())));
+      }
+      res.add(Feature(className: map['classname'].toString(), points: points));
+    }
+    return res;
   }
 
   Future<List<Image>> getImages(String folderId) async {
     final folders = await _storage.getFolderImages(folderId);
-    return folders.map((e) => e.toColumnMap()).map(
-      (e) {
-        return Image(
-          id: e['id'].toString(),
-          fileId: e['path'].toString(),
-          leftTop: Point(
-            x: int.parse(e['lefttopx'].toString()),
-            y: int.parse(e['lefttopy'].toString()),
-          ),
-          rightBottom: Point(
-            x: int.parse(e['rightbottomx'].toString()),
-            y: int.parse(e['rightbottomy'].toString()),
-          ),
-        );
-      },
-    ).toList();
+    final maps = folders.map((e) => e.toColumnMap());
+    final images = <Image>[];
+    for (final imageMap in maps) {
+      final features = await getFeatures(imageMap['id'].toString());
+      images.add(
+        Image(
+          id: imageMap['id'].toString(),
+          features: features,
+          fileId: imageMap['path'].toString(),
+        ),
+      );
+    }
+    return images;
   }
 
   Future<Image> getImage(String id) async {
@@ -51,14 +76,7 @@ class ImagesRepository {
     return Image(
       id: e['id'].toString(),
       fileId: e['path'].toString(),
-      leftTop: Point(
-        x: int.parse(e['lefttopx'].toString()),
-        y: int.parse(e['lefttopy'].toString()),
-      ),
-      rightBottom: Point(
-        x: int.parse(e['rightbottomx'].toString()),
-        y: int.parse(e['rightbottomy'].toString()),
-      ),
+      features: await getFeatures(id),
     );
   }
 }

@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:ml_image_store/model/image/point.dart';
+import 'package:ml_image_store/model/image/feature.dart';
 import 'package:ml_image_store_app/data/repository/folders_repository.dart';
 import 'package:ml_image_store_app/data/repository/images_repository.dart';
 import 'package:ml_image_store_app/presentation/util/error_util.dart';
@@ -25,20 +25,15 @@ class ImageCreationBloc extends Bloc<ImageCreationEvent, ImageCreationState> {
       if (prevState.image == null) return;
       emit(ImageCreationState.editingImage(folderId: state.folderId, image: prevState.image!));
     });
-    on<_LeftTopChanged>((event, emit) {
+    on<_AddFeature>((event, emit) {
       if (state is! EditingState) return;
       final prevState = state as EditingState;
-      emit(prevState.copyWith(leftTop: event.leftTop));
-    });
-    on<_RightBottomChanged>((event, emit) {
-      if (state is! EditingState) return;
-      final prevState = state as EditingState;
-      emit(prevState.copyWith(rightBottom: event.rightBottom));
+      emit(prevState.copyWith(features: [...prevState.features, event.feature]));
     });
     on<_PointsCleared>((event, emit) {
       if (state is! EditingState) return;
       final prevState = state as EditingState;
-      emit(prevState.copyWith(leftTop: null, rightBottom: null));
+      emit(prevState.copyWith(features: const []));
     });
     on<_BackToPickRequested>((event, emit) {
       if (state is! EditingState) return;
@@ -48,15 +43,11 @@ class ImageCreationBloc extends Bloc<ImageCreationEvent, ImageCreationState> {
     on<_SendRequested>((event, emit) async {
       if (state is! EditingState) return;
       final prevState = state as EditingState;
-      if (prevState.leftTop == null || prevState.rightBottom == null) {
-        return;
-      }
       emit(prevState.copyWith(sending: true));
       try {
         await _imagesRepository.createImage(
           state.folderId,
-          prevState.leftTop!,
-          prevState.rightBottom!,
+          prevState.features,
           prevState.image,
         );
         _foldersRepository.fetchFolder(state.folderId);
@@ -78,8 +69,7 @@ class ImageCreationState with _$ImageCreationState {
   const factory ImageCreationState.editingImage({
     required String folderId,
     required Uint8List image,
-    Point? leftTop,
-    Point? rightBottom,
+    @Default([]) List<Feature> features,
     @Default(false) bool sending,
     String? error,
   }) = EditingState;
@@ -97,9 +87,7 @@ class ImageCreationEvent with _$ImageCreationEvent {
 
   const factory ImageCreationEvent.editingRequested() = _EditingRequested;
 
-  const factory ImageCreationEvent.leftTopChanged(Point? leftTop) = _LeftTopChanged;
-
-  const factory ImageCreationEvent.rightBottomChanged(Point? rightBottom) = _RightBottomChanged;
+  const factory ImageCreationEvent.addFeature(Feature feature) = _AddFeature;
 
   const factory ImageCreationEvent.pointsCleared() = _PointsCleared;
 
