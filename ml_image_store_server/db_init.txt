@@ -2,13 +2,13 @@ CREATE TABLE IF NOT EXISTS points (
     id TEXT NOT NULL,
     leftTopX int NOT NULL,
     leftTopY int NOT NULL,
-    featureId TEXT NOT NULL,
+    featureId TEXT NOT NULL
     );
 
 CREATE TABLE IF NOT EXISTS features (
     id TEXT NOT NULL,
     classname TEXT NOT NULL,
-    imageId TEXT NOT NULL,
+    imageId TEXT NOT NULL
     );
 
 CREATE TABLE IF NOT EXISTS users (
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS images(
      id TEXT NOT NULL,
      path TEXT NOT NULL,
-     folderId TEXT NOT NULL,
+     folderId TEXT NOT NULL
      );
 
 CREATE TABLE IF NOT EXISTS folders (
