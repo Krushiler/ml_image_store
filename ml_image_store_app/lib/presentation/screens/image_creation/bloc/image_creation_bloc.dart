@@ -47,7 +47,7 @@ class ImageCreationBloc extends Bloc<ImageCreationEvent, ImageCreationState> {
       try {
         await _imagesRepository.createImage(
           state.folderId,
-          prevState.features,
+          prevState.features.toList(),
           prevState.image,
         );
         _foldersRepository.fetchFolder(state.folderId);

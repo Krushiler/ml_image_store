@@ -135,9 +135,11 @@ class _EditingImageTabState extends State<EditingImageTab> {
                         IconButton(
                           onPressed: points.isNotEmpty
                               ? () {
-                                  context.read<ImageCreationBloc>().add(ImageCreationEvent.addFeature(
-                                        Feature(points: points.toList(), className: nameTextController.text),
-                                      ));
+                                  context.read<ImageCreationBloc>().add(
+                                        ImageCreationEvent.addFeature(
+                                          Feature(points: points.toList(), className: nameTextController.text),
+                                        ),
+                                      );
                                   nameTextController.clear();
                                   setState(() {
                                     points.clear();

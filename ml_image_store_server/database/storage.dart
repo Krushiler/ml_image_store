@@ -262,7 +262,7 @@ INSERT INTO features (id, imageId, classname)
       await conn.execute(
         r'''
 INSERT INTO points (id, featureId, leftTopX, leftTopY)
-      VALUES ($1, $2, $3)
+      VALUES ($1, $2, $3, $4)
       ''',
         parameters: [
           id,

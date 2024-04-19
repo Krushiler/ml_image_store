@@ -43,7 +43,7 @@ class DioFactory {
         LogInterceptor(
           requestBody: true,
           responseBody: true,
-          logPrint: (obj) => log("$obj"),
+          logPrint: (obj) => debugPrint(obj.toString()),
         ),
       );
     }
