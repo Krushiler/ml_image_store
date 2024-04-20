@@ -22,13 +22,17 @@ class FoldersRepository {
 
   Future<void> fetchFolder(String id) async {
     final folder = await _api.getFolder(id);
-    final storageData = await _imagesStorage.get();
-    if (storageData == null) {
+    try {
+      final storageData = await _imagesStorage.get();
+      if (storageData == null) {
+        await _imagesStorage.put([folder]);
+        return;
+      }
+      final newList = storageData.where((element) => element.folder.id != folder.folder.id).toList();
+      await _imagesStorage.put([...newList, folder]);
+    } catch (e) {
       await _imagesStorage.put([folder]);
-      return;
     }
-    final newList = storageData.where((element) => element.folder.id != folder.folder.id).toList();
-    _imagesStorage.put([...newList, folder]);
   }
 
   Stream<FolderResponse?> watchFolder(String id) => _imagesStorage.watch().map(

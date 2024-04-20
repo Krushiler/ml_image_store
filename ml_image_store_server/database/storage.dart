@@ -1,12 +1,11 @@
 import 'dart:async';
 
 import 'package:ml_image_store/model/image/feature.dart';
+import 'package:ml_image_store/model/image/point.dart' as domain;
 import 'package:postgres/postgres.dart';
 import 'package:uuid/uuid.dart';
 
 import 'storage_initializer.dart';
-
-import 'package:ml_image_store/model/image/point.dart' as domain;
 
 class Storage {
   Future<Connection> _connect() => StorageInitializer.connect();
@@ -241,13 +240,14 @@ INSERT INTO images (id, path, folderId)
     return execute((conn) async {
       await conn.execute(
         r'''
-INSERT INTO features (id, imageId, classname)
-      VALUES ($1, $2, $3)
+INSERT INTO features (id, imageId, classname, bbox)
+      VALUES ($1, $2, $3, $4)
       ''',
         parameters: [
           id,
           imageId,
           feature.className,
+          feature.isBbox,
         ],
       );
     });
@@ -261,14 +261,15 @@ INSERT INTO features (id, imageId, classname)
     return execute((conn) async {
       await conn.execute(
         r'''
-INSERT INTO points (id, featureId, leftTopX, leftTopY)
-      VALUES ($1, $2, $3, $4)
+INSERT INTO points (id, featureId, leftTopX, leftTopY, radius)
+      VALUES ($1, $2, $3, $4, $5)
       ''',
         parameters: [
           id,
           featureId,
           point.x,
           point.y,
+          point.radius,
         ],
       );
     });

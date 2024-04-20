@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -28,18 +27,6 @@ class _EditingImageTabState extends State<EditingImageTab> {
   final List<Point> points = [];
 
   bool createdImage = false;
-
-  double get aspectRatio => (image?.width ?? 1) / (image?.height ?? 1);
-
-  double get canvasAspectRatio => (canvasSize?.width ?? 1) / (canvasSize?.height ?? 1);
-
-  int get topOffset => min(0, (canvasAspectRatio / aspectRatio - 1) * (canvasSize?.height ?? 1) ~/ 2);
-
-  int get leftOffset => min(0, (aspectRatio / canvasAspectRatio - 1) * (canvasSize?.width ?? 1) ~/ 2);
-
-  double get imageWidthRatio => (image?.width ?? 1) / (canvasSize?.width ?? 1);
-
-  double get imageHeightRatio => (image?.height ?? 1) / (canvasSize?.height ?? 1);
 
   Future<void> _createImage(EditingState state) async {
     ui.decodeImageFromList(

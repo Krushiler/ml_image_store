@@ -51,12 +51,16 @@ class HiveJsonStorage<T> {
   }
 
   Future<T?> _getFromBox() async {
-    final model = (await _getBox()).get(_key);
-    final jsonStr = model?.json ?? '';
-    if (jsonStr.isEmpty) return null;
+    try {
+      final model = (await _getBox()).get(_key);
+      final jsonStr = model?.json ?? '';
+      if (jsonStr.isEmpty) return null;
 
-    final json = jsonDecode(jsonStr);
-    return _fromJson(json);
+      final json = jsonDecode(jsonStr);
+      return _fromJson(json);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> put(T value) async {
@@ -72,8 +76,7 @@ class HiveJsonStorage<T> {
 }
 
 class StringHiveJsonStorage extends HiveJsonStorage<String> {
-  StringHiveJsonStorage({required super.key})
-      : super(toJson: (id) => {'id': id}, fromJson: (map) => map['id']);
+  StringHiveJsonStorage({required super.key}) : super(toJson: (id) => {'id': id}, fromJson: (map) => map['id']);
 }
 
 class ListHiveJsonStorage<T> extends HiveJsonStorage<List<T>> {
