@@ -38,7 +38,7 @@ Future<Response> _onGet(RequestContext context, String id) async {
     encoder.addArchiveFile(archive.ArchiveFile('image-$i.png', 0, bytes));
 
     final pointsData = jsonEncode(image.features);
-    encoder.addArchiveFile(archive.ArchiveFile('points-$i.dat', 0, pointsData));
+    encoder.addArchiveFile(archive.ArchiveFile('points-$i.json', 0, pointsData));
   }
 
   encoder.close();
