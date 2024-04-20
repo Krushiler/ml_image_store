@@ -3,12 +3,14 @@ CREATE TABLE IF NOT EXISTS points (
     leftTopX int NOT NULL,
     leftTopY int NOT NULL,
     featureId TEXT NOT NULL
+    radius int NOT NULL
     );
 
 CREATE TABLE IF NOT EXISTS features (
     id TEXT NOT NULL,
     classname TEXT NOT NULL,
-    imageId TEXT NOT NULL
+    imageId TEXT NOT NULL,
+    bbox BOOL NOT NULL,
     );
 
 CREATE TABLE IF NOT EXISTS users (

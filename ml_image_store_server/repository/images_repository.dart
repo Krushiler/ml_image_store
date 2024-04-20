@@ -46,9 +46,23 @@ class ImagesRepository {
       final points = <Point>[];
       for (final p in pointsRes) {
         final e = p.toColumnMap();
-        points.add(Point(x: int.parse(e['lefttopx'].toString()), y: int.parse(e['lefttopy'].toString())));
+        points.add(
+          Point(
+            x: int.parse(e['lefttopx'].toString()),
+            y: int.parse(e['lefttopy'].toString()),
+            id: e['id'].toString(),
+            radius: int.tryParse(e['radius'].toString()) ?? 0,
+          ),
+        );
       }
-      res.add(Feature(className: map['classname'].toString(), points: points));
+      res.add(
+        Feature(
+          className: map['classname'].toString(),
+          points: points,
+          id: map['id'].toString(),
+          isBbox: map['bbox'].toString() == 't',
+        ),
+      );
     }
     return res;
   }

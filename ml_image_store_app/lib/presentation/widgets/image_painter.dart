@@ -1,11 +1,9 @@
-import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:ml_image_store/model/image/feature.dart';
 import 'package:ml_image_store/model/image/point.dart';
-
-// TODO: Refactor
+import 'package:ml_image_store_app/presentation/util/image_util.dart';
 
 class ImagePainter extends CustomPainter {
   final ui.Image image;
@@ -41,18 +39,8 @@ class ImagePainter extends CustomPainter {
     Colors.purpleAccent,
   ];
 
-  void drawPoints(Canvas canvas, Size size, List<Point> points, String? name) {
+  void drawPoints(Canvas canvas, Size canvasSize, List<Point> points, String? name, Size imageSize) {
     if (points.isEmpty) return;
-
-    double canvasAspectRatio = size.width / size.height;
-
-    int topOffset = min(0, (canvasAspectRatio / aspectRatio - 1) * size.height ~/ 2);
-
-    int leftOffset = min(0, (aspectRatio / canvasAspectRatio - 1) * size.width ~/ 2);
-
-    double imageWidthRatio = image.width / size.width;
-
-    double imageHeightRatio = image.height / size.height;
 
     final color = name == null ? Colors.red : featureColorMap[name] ?? Colors.red;
 
@@ -79,38 +67,22 @@ class ImagePainter extends CustomPainter {
       );
       textPainter.layout(
         minWidth: 0,
-        maxWidth: size.width,
+        maxWidth: canvasSize.width ?? 0,
       );
       textPainter.paint(
         canvas,
-        Offset(
-          points[0].x.toDouble() / imageWidthRatio + leftOffset - 48,
-          points[0].y.toDouble() / imageHeightRatio + topOffset - 48,
-        ),
+        convertToCanvasOffset(points[0].offset, imageSize, canvasSize) - const Offset(48, 48),
       );
     }
 
     for (int i = 0; i < points.length; i++) {
       final point = points[i];
-      canvas.drawCircle(
-        ui.Offset(
-          point.x.toDouble() / imageWidthRatio + leftOffset,
-          point.y.toDouble() / imageHeightRatio + topOffset,
-        ),
-        8,
-        circlePaint,
-      );
+      canvas.drawCircle(convertToCanvasOffset(point.offset, imageSize, canvasSize), 4, circlePaint);
       if (points.length == 1) break;
       final nextPoint = points[(i + 1) % points.length];
       canvas.drawLine(
-        ui.Offset(
-          point.x.toDouble() / imageWidthRatio + leftOffset,
-          point.y.toDouble() / imageHeightRatio + topOffset,
-        ),
-        ui.Offset(
-          nextPoint.x.toDouble() / imageWidthRatio + leftOffset,
-          nextPoint.y.toDouble() / imageHeightRatio + topOffset,
-        ),
+        convertToCanvasOffset(point.offset, imageSize, canvasSize),
+        convertToCanvasOffset(nextPoint.offset, imageSize, canvasSize),
         boxPaint,
       );
     }
@@ -121,10 +93,18 @@ class ImagePainter extends CustomPainter {
     if (this.size != size) {
       sizeChanged?.call(size);
     }
+    final fittedSize = applyBoxFit(
+      BoxFit.fill,
+      ui.Size(image.width.toDouble(), image.height.toDouble()),
+      size,
+    );
+
+    final imageSize = fittedSize;
+
     paintImage(canvas: canvas, rect: Rect.fromLTRB(0, 0, size.width, size.height), image: image);
-    drawPoints(canvas, size, points, null);
+    drawPoints(canvas, size, points, null, imageSize.source);
     for (final feature in features) {
-      drawPoints(canvas, size, feature.points, feature.className);
+      drawPoints(canvas, size, feature.points, feature.className, imageSize.source);
     }
   }
 

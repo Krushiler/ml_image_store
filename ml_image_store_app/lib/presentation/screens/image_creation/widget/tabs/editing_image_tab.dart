@@ -8,7 +8,9 @@ import 'package:ml_image_store/model/image/point.dart';
 import 'package:ml_image_store_app/presentation/screens/image_creation/bloc/image_creation_bloc.dart';
 import 'package:ml_image_store_app/presentation/style/kit/dimens.dart';
 import 'package:ml_image_store_app/presentation/style/kit/gap.dart';
+import 'package:ml_image_store_app/presentation/util/image_util.dart';
 import 'package:ml_image_store_app/presentation/widgets/image_painter.dart';
+import 'package:uuid/uuid.dart';
 
 // TODO: Refactor
 
@@ -86,10 +88,13 @@ class _EditingImageTabState extends State<EditingImageTab> {
                               onPanStart: (event) {
                                 if (state.sending) return;
                                 if (canvasSize == null) return;
-                                double x = (event.localPosition.dx - leftOffset) * imageWidthRatio;
-                                double y = (event.localPosition.dy - topOffset) * imageHeightRatio;
+                                final offset = convertToImageOffset(
+                                  event.localPosition,
+                                  ui.Size(image!.width.toDouble(), image!.height.toDouble()),
+                                  canvasSize!,
+                                );
                                 setState(() {
-                                  points.add(Point(x: x.toInt(), y: y.toInt()));
+                                  points.add(Point(x: offset.dx.toInt(), y: offset.dy.toInt(), id: const Uuid().v4()));
                                 });
                               },
                               child: CustomPaint(
@@ -137,7 +142,11 @@ class _EditingImageTabState extends State<EditingImageTab> {
                               ? () {
                                   context.read<ImageCreationBloc>().add(
                                         ImageCreationEvent.addFeature(
-                                          Feature(points: points.toList(), className: nameTextController.text),
+                                          Feature(
+                                            points: points.toList(),
+                                            className: nameTextController.text,
+                                            id: const Uuid().v4(),
+                                          ),
                                         ),
                                       );
                                   nameTextController.clear();
