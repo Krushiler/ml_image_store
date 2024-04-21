@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ml_image_store/model/folder/folder.dart';
 import 'package:ml_image_store_app/presentation/style/kit/gap.dart';
 import 'package:ml_image_store_app/presentation/style/theme/app_context_extension.dart';
 
@@ -11,6 +12,7 @@ class CreateFolderDialog extends StatefulWidget {
 
 class _CreateFolderDialogState extends State<CreateFolderDialog> {
   final TextEditingController controller = TextEditingController();
+  LabelType type = LabelType.bbox;
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +28,17 @@ class _CreateFolderDialogState extends State<CreateFolderDialog> {
           },
         ),
         Gap.md,
+        DropdownButtonFormField<LabelType>(
+          decoration: const InputDecoration(labelText: 'Type'),
+          value: type,
+          onChanged: (value) {
+            setState(() {
+              type = value ?? type;
+            });
+          },
+          items: LabelType.values.map((e) => DropdownMenuItem<LabelType>(value: e, child: Text(e.name))).toList(),
+        ),
+        Gap.md,
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -33,7 +46,7 @@ class _CreateFolderDialogState extends State<CreateFolderDialog> {
             TextButton(
               onPressed: controller.text.isNotEmpty
                   ? () {
-                      Navigator.of(context).pop(controller.text);
+                      Navigator.of(context).pop(CreateFolderResult(controller.text, type));
                     }
                   : null,
               child: const Text('Create'),
@@ -43,4 +56,11 @@ class _CreateFolderDialogState extends State<CreateFolderDialog> {
       ],
     );
   }
+}
+
+class CreateFolderResult {
+  final String name;
+  final LabelType type;
+
+  CreateFolderResult(this.name, this.type);
 }

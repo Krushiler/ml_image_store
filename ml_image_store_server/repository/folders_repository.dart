@@ -7,8 +7,8 @@ class FoldersRepository {
 
   final Storage _storage;
 
-  Future<void> createFolder(String userId, String folderName) async {
-    await _storage.createFolder(userId, folderName);
+  Future<void> createFolder(String userId, String folderName, int type) async {
+    await _storage.createFolder(userId, folderName, type);
   }
 
   Future<void> deleteFolder(String userId, String folderId) async {
@@ -34,6 +34,7 @@ class FoldersRepository {
       id: e['id'].toString(),
       name: e['name'].toString(),
       ownerId: e['ownerId'.toLowerCase()].toString(),
+      type: LabelType.values[int.parse(e['type'].toString())],
     );
   }
 
@@ -46,6 +47,7 @@ class FoldersRepository {
             id: e['id'].toString(),
             name: e['name'].toString(),
             ownerId: e['ownerId'.toLowerCase()].toString(),
+            type: LabelType.values[int.parse(e['type'].toString())],
           ),
         )
         .toList();

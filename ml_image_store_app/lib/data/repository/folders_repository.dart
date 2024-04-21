@@ -39,8 +39,8 @@ class FoldersRepository {
         (event) => event?.where((element) => element.folder.id == id).firstOrNull,
       );
 
-  Future<void> createFolder(String name) {
-    return _api.createFolder(CreateFolderRequest(name: name));
+  Future<void> createFolder(String name, LabelType type) {
+    return _api.createFolder(CreateFolderRequest(name: name, type: type.index));
   }
 
   Future<void> deleteFolder(String id) {

@@ -8,6 +8,7 @@ part 'create_folder_request.g.dart';
 class CreateFolderRequest with _$CreateFolderRequest {
   const factory CreateFolderRequest({
     required String name,
+    required int type,
   }) = _CreateFolderRequest;
 
   factory CreateFolderRequest.fromJson(Map<String, dynamic> json) => _$CreateFolderRequestFromJson(json);

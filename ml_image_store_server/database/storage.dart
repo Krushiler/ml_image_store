@@ -144,16 +144,16 @@ INSERT INTO users (id, name, password, token)
     });
   }
 
-  Future<int> createFolder(String userId, String name) async {
+  Future<int> createFolder(String userId, String name, int type) async {
     try {
       return execute((conn) async {
         final id = const Uuid().v4();
         final userRows = await conn.execute(
           r'''
-INSERT INTO folders (id, name, ownerId)
-      VALUES ($1, $2, $3)
+INSERT INTO folders (id, name, ownerId, type)
+      VALUES ($1, $2, $3, $4)
       ''',
-          parameters: [id, name, userId],
+          parameters: [id, name, userId, type],
         );
         return userRows.affectedRows;
       });
@@ -240,14 +240,13 @@ INSERT INTO images (id, path, folderId)
     return execute((conn) async {
       await conn.execute(
         r'''
-INSERT INTO features (id, imageId, classname, bbox)
-      VALUES ($1, $2, $3, $4)
+INSERT INTO features (id, imageId, classname)
+      VALUES ($1, $2, $3)
       ''',
         parameters: [
           id,
           imageId,
-          feature.className,
-          feature.isBbox,
+          feature.className
         ],
       );
     });
@@ -261,15 +260,14 @@ INSERT INTO features (id, imageId, classname, bbox)
     return execute((conn) async {
       await conn.execute(
         r'''
-INSERT INTO points (id, featureId, leftTopX, leftTopY, radius)
-      VALUES ($1, $2, $3, $4, $5)
+INSERT INTO points (id, featureId, leftTopX, leftTopY)
+      VALUES ($1, $2, $3, $4)
       ''',
         parameters: [
           id,
           featureId,
           point.x,
           point.y,
-          point.radius,
         ],
       );
     });

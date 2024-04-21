@@ -27,6 +27,6 @@ Future<Response> _onPost(RequestContext context) async {
   final body = (await context.request.json()) as Map<String, dynamic>;
   final request = CreateFolderRequest.fromJson(body);
   final foldersRepository = context.read<FoldersRepository>();
-  await foldersRepository.createFolder(user.id, request.name);
+  await foldersRepository.createFolder(user.id, request.name, request.type);
   return Response();
 }

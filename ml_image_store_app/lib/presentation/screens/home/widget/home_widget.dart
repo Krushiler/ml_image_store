@@ -29,9 +29,9 @@ class _HomeWidgetState extends State<HomeWidget> {
           child: Scaffold(
             floatingActionButton: FloatingActionButton(
               onPressed: () async {
-                final result = await context.showAppDialog(child: const CreateFolderDialog());
+                final result = await context.showAppDialog<CreateFolderResult>(child: const CreateFolderDialog());
                 if (result != null && context.mounted) {
-                  context.read<HomeBloc>().add(HomeEvent.createFolderRequested(result));
+                  context.read<HomeBloc>().add(HomeEvent.createFolderRequested(result.name, result.type));
                 }
               },
               child: Icon(

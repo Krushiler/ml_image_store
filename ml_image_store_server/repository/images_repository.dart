@@ -55,7 +55,6 @@ class ImagesRepository {
             x: int.parse(e['lefttopx'].toString()),
             y: int.parse(e['lefttopy'].toString()),
             id: e['id'].toString(),
-            radius: int.tryParse(e['radius'].toString()) ?? 0,
           ),
         );
       }
@@ -64,7 +63,6 @@ class ImagesRepository {
           className: map['classname'].toString(),
           points: points,
           id: map['id'].toString(),
-          isBbox: map['bbox'].toString() == 't',
         ),
       );
     }

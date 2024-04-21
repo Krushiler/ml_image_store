@@ -34,7 +34,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with SubscriptionBloc {
     on<_CreateFolderRequested>((event, emit) async {
       emit(state.copyWith(isCreatingFolder: true));
       try {
-        await _foldersRepository.createFolder(event.name);
+        await _foldersRepository.createFolder(event.name, event.type);
         add(const HomeEvent.loadFoldersRequested());
       } catch (e) {
         emit(state.copyWith(error: createErrorMessage(e)));
@@ -82,7 +82,7 @@ class HomeEvent with _$HomeEvent {
 
   const factory HomeEvent.foldersChanged(List<Folder> folders) = _FoldersChanged;
 
-  const factory HomeEvent.createFolderRequested(String name) = _CreateFolderRequested;
+  const factory HomeEvent.createFolderRequested(String name, LabelType type) = _CreateFolderRequested;
 
   const factory HomeEvent.deleteFolderRequested(String id) = _DeleteFolderRequested;
 }

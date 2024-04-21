@@ -10,7 +10,6 @@ class Point with _$Point {
     required String id,
     required int x,
     required int y,
-    @Default(0) int radius,
   }) = _Point;
 
   factory Point.fromJson(Map<String, dynamic> json) => _$PointFromJson(json);
