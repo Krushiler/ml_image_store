@@ -5,13 +5,14 @@ import 'package:ml_image_store_app/presentation/screens/image_creation/widget/im
 
 class ImageCreationScreen extends StatelessWidget {
   final String folderId;
+  final String? imageId;
 
-  const ImageCreationScreen({super.key, required this.folderId});
+  const ImageCreationScreen({super.key, required this.folderId, this.imageId});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider<ImageCreationBloc>(
-      create: (context) => ImageCreationBloc(folderId, context.read(), context.read()),
+      create: (context) => ImageCreationBloc(folderId, imageId, context.read(), context.read(), context.read()),
       child: const ImageCreationWidget(),
     );
   }

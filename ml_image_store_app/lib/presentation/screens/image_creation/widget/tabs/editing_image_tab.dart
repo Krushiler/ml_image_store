@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:ml_image_store/model/image/feature.dart';
 import 'package:ml_image_store/model/image/point.dart';
 import 'package:ml_image_store_app/presentation/screens/image_creation/bloc/image_creation_bloc.dart';
@@ -157,9 +158,13 @@ class _EditingImageTabState extends State<EditingImageTab> {
                           child: OutlinedButton(
                             onPressed: !state.sending
                                 ? () {
-                                    context
-                                        .read<ImageCreationBloc>()
-                                        .add(const ImageCreationEvent.backToPickRequested());
+                                    if (state.imageId == null) {
+                                      context
+                                          .read<ImageCreationBloc>()
+                                          .add(const ImageCreationEvent.backToPickRequested());
+                                    } else {
+                                      context.pop();
+                                    }
                                   }
                                 : null,
                             child: const Text('Back'),

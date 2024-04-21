@@ -41,6 +41,7 @@ abstract class MlImageApi {
   Future<void> createImage({
     @Part(name: 'folderId') required String folderId,
     @Part(name: 'features') required String features,
+    @Part(name: 'imageId') String? imageId,
     @Part(name: 'image') required List<MultipartFile> image,
   });
 

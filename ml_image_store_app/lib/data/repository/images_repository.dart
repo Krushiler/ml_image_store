@@ -16,10 +16,12 @@ class ImagesRepository {
     String folderId,
     List<Feature> features,
     Uint8List image,
+    String? imageId,
   ) {
     return _api.createImage(
       folderId: folderId,
       features: jsonEncode(features),
+      imageId: imageId,
       image: [MultipartFile.fromBytes(image, contentType: MediaType('image', 'png'), filename: 'image.png')],
     );
   }

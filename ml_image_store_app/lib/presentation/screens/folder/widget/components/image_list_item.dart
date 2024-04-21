@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ml_image_store/model/image/image.dart' as domain;
 import 'package:ml_image_store_app/presentation/style/kit/dimens.dart';
 import 'package:ml_image_store_app/presentation/style/theme/app_context_extension.dart';
@@ -59,7 +60,7 @@ class _ImageListItemState extends State<ImageListItem> with TickerProviderStateM
               border: Border.all(color: context.colors.primary),
             ),
             child: CachedNetworkImage(
-              imageUrl: createImageUrl(context, widget.image.fileId),
+              imageUrl: createImageUrl(context.read(), widget.image.fileId),
               progressIndicatorBuilder: (context, url, progress) => Padding(
                 padding: const EdgeInsets.all(Dimens.md),
                 child: CircularProgressIndicator(value: progress.progress),

@@ -6,7 +6,6 @@ import 'package:ml_image_store_app/presentation/screens/app/app_navigation_cubit
 import 'package:ml_image_store_app/presentation/screens/auth/login/login_screen.dart';
 import 'package:ml_image_store_app/presentation/screens/folder/folder_screen.dart';
 import 'package:ml_image_store_app/presentation/screens/home/home_screen.dart';
-import 'package:ml_image_store_app/presentation/screens/image/image_screen.dart';
 import 'package:ml_image_store_app/presentation/screens/image_creation/image_creation_screen.dart';
 import 'package:ml_image_store_app/presentation/util/go_router_refresh_stream.dart';
 
@@ -46,7 +45,10 @@ class AppRouter {
                 path: ':imageId',
                 name: Routes.image.name,
                 pageBuilder: (context, state) => _page(
-                  ImageScreen(imageId: state.pathParameters['imageId'] ?? ''),
+                  ImageCreationScreen(
+                    folderId: state.pathParameters['id'] ?? '',
+                    imageId: state.pathParameters['imageId'] ?? '',
+                  ),
                 ),
               ),
             ],

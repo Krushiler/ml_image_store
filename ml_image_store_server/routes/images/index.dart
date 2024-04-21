@@ -29,6 +29,7 @@ Future<Response> _onPost(RequestContext context) async {
     (jsonDecode(data.fields['features']!) as List<dynamic>)
         .map((e) => Feature.fromJson(e as Map<String, dynamic>))
         .toList(),
+    data.fields['imageId'],
   );
   return Response();
 }

@@ -1,12 +1,11 @@
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
-import 'package:ml_image_store_app/data/model/server_config.dart';
-import 'package:provider/provider.dart';
 import 'package:ml_image_store/model/image/point.dart' as domain;
+import 'package:ml_image_store_app/data/model/server_config.dart';
 
-String createImageUrl(BuildContext context, String imageId) {
-  return '${context.read<ServerConfig>().baseUrl}/files/$imageId';
+String createImageUrl(ServerConfig config, String imageId) {
+  return '${config.baseUrl}/files/$imageId';
 }
 
 extension PointUiExtension on domain.Point {

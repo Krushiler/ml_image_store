@@ -19,7 +19,8 @@ class _PickingImageTabState extends State<PickingImageTab> {
     return BlocBuilder<ImageCreationBloc, ImageCreationState>(
       buildWhen: (prev, curr) => curr is PickingState,
       builder: (context, s) {
-        final state = s as PickingState;
+        if (s is! PickingState) return Container();
+        final state = s;
         return SafeArea(
           child: Column(
             children: [

@@ -14,8 +14,12 @@ class ImagesRepository {
     String folderId,
     String filePath,
     List<Feature> features,
+    String? imageId,
   ) async {
-    final id = const Uuid().v4();
+    if (imageId != null) {
+      await deleteImage(imageId);
+    }
+    final id = imageId ?? const Uuid().v4();
     await _storage.createImage(id, filePath, folderId);
     for (final feature in features) {
       final featureId = const Uuid().v4();

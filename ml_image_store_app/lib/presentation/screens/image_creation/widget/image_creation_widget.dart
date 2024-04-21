@@ -40,12 +40,17 @@ class _ImageCreationWidgetState extends State<ImageCreationWidget> {
                 );
               }
             },
-            child: PageView(
-              controller: pageController,
-              physics: const NeverScrollableScrollPhysics(),
-              children: const [
-                PickingImageTab(),
-                EditingImageTab(),
+            child: Stack(
+              children: [
+                PageView(
+                  controller: pageController,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: const [
+                    PickingImageTab(),
+                    EditingImageTab(),
+                  ],
+                ),
+                if (state is LoadingState) const Center(child: CircularProgressIndicator()),
               ],
             ),
           ),
