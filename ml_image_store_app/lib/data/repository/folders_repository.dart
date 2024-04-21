@@ -3,6 +3,7 @@ import 'package:ml_image_store/request/create_folder_request.dart';
 import 'package:ml_image_store/response/folder_response.dart';
 import 'package:ml_image_store_app/data/network/ml_image_api.dart';
 import 'package:ml_image_store_app/data/storage/folders_storage.dart';
+import 'package:collection/collection.dart';
 
 class FoldersRepository {
   final MlImageApi _api;
@@ -33,6 +34,16 @@ class FoldersRepository {
     } catch (e) {
       await _imagesStorage.put([folder]);
     }
+  }
+
+  Future<Folder> getFolder(String id) async {
+    final folder = await _getFolder(id);
+    return folder ?? (await _api.getFolder(id)).folder;
+  }
+
+  Future<Folder?> _getFolder(String id) async {
+    final folder = (await _storage.get())?.firstWhereOrNull((element) => element.id == id);
+    return folder;
   }
 
   Stream<FolderResponse?> watchFolder(String id) => _imagesStorage.watch().map(

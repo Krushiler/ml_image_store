@@ -13,7 +13,7 @@ extension PointUiExtension on domain.Point {
 }
 
 Offset convertToCanvasOffset(Offset original, Size imageSize, Size canvasSize) {
-  final double widthMultiplier = min(1, canvasSize.height / imageSize.height);
+  final double widthMultiplier = min(1, canvasSize.width / imageSize.width);
 
   final double heightMultiplier = min(1, canvasSize.height / imageSize.height);
 
@@ -27,7 +27,7 @@ Offset convertToCanvasOffset(Offset original, Size imageSize, Size canvasSize) {
 }
 
 Offset convertToImageOffset(Offset original, Size imageSize, Size canvasSize) {
-  final double widthMultiplier = min(1, canvasSize.height / imageSize.height);
+  final double widthMultiplier = min(1, canvasSize.width / imageSize.width);
 
   final double heightMultiplier = min(1, canvasSize.height / imageSize.height);
 
@@ -37,5 +37,8 @@ Offset convertToImageOffset(Offset original, Size imageSize, Size canvasSize) {
 
   final imageStart = canvasSize.center(Offset(-imageViewSize.width / 2, -imageViewSize.height / 2));
 
-  return Offset(-imageStart.dx + original.dx / sizeMultiplier, -imageStart.dy + original.dy / sizeMultiplier);
+  return Offset(
+    original.dx / sizeMultiplier - imageStart.dx / sizeMultiplier,
+    original.dy / sizeMultiplier - imageStart.dy / sizeMultiplier,
+  );
 }

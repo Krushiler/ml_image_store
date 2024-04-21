@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ml_image_store/model/folder/folder.dart';
 import 'package:ml_image_store/model/image/feature.dart';
 import 'package:ml_image_store/model/image/point.dart';
 import 'package:ml_image_store_app/presentation/screens/image_creation/bloc/image_creation_bloc.dart';
@@ -21,14 +22,20 @@ class EditingImageTab extends StatefulWidget {
   State<EditingImageTab> createState() => _EditingImageTabState();
 }
 
-class _EditingImageTabState extends State<EditingImageTab> {
+class _EditingImageTabState extends State<EditingImageTab> with TickerProviderStateMixin {
   ui.Image? image;
   ui.Size? canvasSize;
-  bool isBbox = false;
+
+  String? deletingFeatureId;
 
   final List<Point> points = [];
 
   bool createdImage = false;
+
+  late final AnimationController deleteAnimationController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 300),
+  );
 
   Future<void> _createImage(EditingState state) async {
     ui.decodeImageFromList(
@@ -81,8 +88,42 @@ class _EditingImageTabState extends State<EditingImageTab> {
                       padding: const EdgeInsets.all(Dimens.md),
                       child: image != null
                           ? GestureDetector(
+                              onTapDown: (event) {
+                                final offset = convertToImageOffset(
+                                  event.localPosition,
+                                  ui.Size(image!.width.toDouble(), image!.height.toDouble()),
+                                  canvasSize!,
+                                );
+                                double distance = 0;
+                                Feature? nearestFeature;
+                                for (final feature in state.features) {
+                                  for (final point in feature.points) {
+                                    final p = point.offset;
+                                    final d = (offset - p).distance;
+                                    if ((d < distance || distance == 0) && d < 20) {
+                                      distance = d;
+                                      nearestFeature = feature;
+                                    }
+                                  }
+                                }
+                                if (nearestFeature != null) {
+                                  deletingFeatureId = nearestFeature.id;
+                                  deleteAnimationController.forward(from: 0);
+                                }
+                              },
+                              onTapUp: (event) {
+                                if (deletingFeatureId != null && deleteAnimationController.isCompleted) {
+                                  context
+                                      .read<ImageCreationBloc>()
+                                      .add(ImageCreationEvent.removeFeature(deletingFeatureId!));
+                                  deleteAnimationController.stop();
+                                  deleteAnimationController.value = 0;
+                                }
+                              },
                               onPanStart: (event) {
-                                if (state.sending) return;
+                                deleteAnimationController.stop();
+                                deleteAnimationController.value = 0;
+                                deletingFeatureId = null;
                                 if (canvasSize == null) return;
                                 final offset = convertToImageOffset(
                                   event.localPosition,
@@ -90,25 +131,50 @@ class _EditingImageTabState extends State<EditingImageTab> {
                                   canvasSize!,
                                 );
                                 setState(() {
+                                  if (state.folder?.type == LabelType.bbox) {
+                                    points.clear();
+                                  }
                                   points.add(Point(x: offset.dx.toInt(), y: offset.dy.toInt(), id: const Uuid().v4()));
                                 });
                               },
-                              child: CustomPaint(
-                                painter: ImagePainter(
-                                  image!,
-                                  state.features,
-                                  points: points,
-                                  size: canvasSize,
-                                  sizeChanged: (size) {
-                                    canvasSize = size;
-                                  },
+                              onPanUpdate: (event) {
+                                if (state.folder?.type == LabelType.bbox) {
+                                  if (canvasSize == null) return;
+                                  final offset = convertToImageOffset(
+                                    event.localPosition,
+                                    ui.Size(image!.width.toDouble(), image!.height.toDouble()),
+                                    canvasSize!,
+                                  );
+                                  setState(() {
+                                    if (points.length > 1) {
+                                      points.removeRange(1, points.length);
+                                    }
+                                    points.add(
+                                      Point(x: offset.dx.toInt(), y: offset.dy.toInt(), id: const Uuid().v4()),
+                                    );
+                                  });
+                                }
+                              },
+                              child: AnimatedBuilder(
+                                animation: deleteAnimationController,
+                                builder: (context, child) => CustomPaint(
+                                  painter: ImagePainter(
+                                    image!,
+                                    state.features,
+                                    labelType: state.folder?.type ?? LabelType.bbox,
+                                    points: points,
+                                    size: canvasSize,
+                                    sizeChanged: (size) {
+                                      canvasSize = size;
+                                    },
+                                    deletingFeatureId: deletingFeatureId,
+                                    deleteAnimationValue: deleteAnimationController.value,
+                                  ),
+                                  child: const SizedBox.expand(),
                                 ),
-                                child: const SizedBox.expand(),
                               ),
                             )
-                          : const Center(
-                              child: CircularProgressIndicator(),
-                            ),
+                          : const Center(child: CircularProgressIndicator()),
                     ),
                   ),
                   Padding(
@@ -131,7 +197,9 @@ class _EditingImageTabState extends State<EditingImageTab> {
                         ),
                         Gap.md,
                         IconButton(
-                          onPressed: points.isNotEmpty
+                          onPressed: points.isNotEmpty &&
+                                  (state.folder?.type == LabelType.polygon ||
+                                      (state.folder?.type == LabelType.bbox && points.length == 2))
                               ? () {
                                   context.read<ImageCreationBloc>().add(
                                         ImageCreationEvent.addFeature(

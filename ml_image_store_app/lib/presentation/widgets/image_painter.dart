@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:ml_image_store/model/folder/folder.dart';
 import 'package:ml_image_store/model/image/feature.dart';
 import 'package:ml_image_store/model/image/point.dart';
 import 'package:ml_image_store_app/presentation/util/image_util.dart';
@@ -11,10 +12,34 @@ class ImagePainter extends CustomPainter {
   final List<Point> points;
   final ValueChanged<Size>? sizeChanged;
   final Size? size;
+  final LabelType labelType;
+  final String? deletingFeatureId;
+  final double deleteAnimationValue;
 
   double get aspectRatio => image.width / image.height;
 
-  ImagePainter(this.image, this.features, {this.points = const [], this.sizeChanged, this.size});
+  ImagePainter(
+    this.image,
+    this.features, {
+    required this.labelType,
+    this.points = const [],
+    this.sizeChanged,
+    this.size,
+    this.deletingFeatureId,
+    this.deleteAnimationValue = 0,
+  });
+
+  @override
+  bool shouldRepaint(ImagePainter oldDelegate) {
+    return image != oldDelegate.image ||
+        points != oldDelegate.points ||
+        points.length != oldDelegate.points.length ||
+        features != oldDelegate.features ||
+        features.length != oldDelegate.features.length ||
+        labelType != oldDelegate.labelType ||
+        deletingFeatureId != oldDelegate.deletingFeatureId ||
+        deleteAnimationValue != oldDelegate.deleteAnimationValue;
+  }
 
   late final featureColorMap = _createColorMap();
 
@@ -39,7 +64,8 @@ class ImagePainter extends CustomPainter {
     Colors.purpleAccent,
   ];
 
-  void drawPoints(Canvas canvas, Size canvasSize, List<Point> points, String? name, Size imageSize) {
+  void drawPoints(Canvas canvas, Size canvasSize, List<Point> points, String? name, Size imageSize,
+      [bool isDeleting = false]) {
     if (points.isEmpty) return;
 
     final color = name == null ? Colors.red : featureColorMap[name] ?? Colors.red;
@@ -51,6 +77,11 @@ class ImagePainter extends CustomPainter {
       ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4;
+
+    final Paint deletePaint = Paint()
+      ..color = Colors.red
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2 + deleteAnimationValue * 4;
 
     if (name != null) {
       final textStyle = TextStyle(
@@ -67,7 +98,7 @@ class ImagePainter extends CustomPainter {
       );
       textPainter.layout(
         minWidth: 0,
-        maxWidth: canvasSize.width ?? 0,
+        maxWidth: canvasSize.width,
       );
       textPainter.paint(
         canvas,
@@ -75,16 +106,60 @@ class ImagePainter extends CustomPainter {
       );
     }
 
-    for (int i = 0; i < points.length; i++) {
-      final point = points[i];
-      canvas.drawCircle(convertToCanvasOffset(point.offset, imageSize, canvasSize), 4, circlePaint);
-      if (points.length == 1) break;
-      final nextPoint = points[(i + 1) % points.length];
-      canvas.drawLine(
-        convertToCanvasOffset(point.offset, imageSize, canvasSize),
-        convertToCanvasOffset(nextPoint.offset, imageSize, canvasSize),
-        boxPaint,
-      );
+    if (labelType == LabelType.polygon) {
+      for (int i = 0; i < points.length; i++) {
+        final point = points[i];
+        if (isDeleting) {
+          canvas.drawCircle(convertToCanvasOffset(point.offset, imageSize, canvasSize), 4, deletePaint);
+        }
+        canvas.drawCircle(convertToCanvasOffset(point.offset, imageSize, canvasSize), 4, circlePaint);
+        if (points.length == 1) break;
+        final nextPoint = points[(i + 1) % points.length];
+        if (isDeleting) {
+          canvas.drawLine(
+            convertToCanvasOffset(point.offset, imageSize, canvasSize),
+            convertToCanvasOffset(nextPoint.offset, imageSize, canvasSize),
+            deletePaint,
+          );
+        }
+        canvas.drawLine(
+          convertToCanvasOffset(point.offset, imageSize, canvasSize),
+          convertToCanvasOffset(nextPoint.offset, imageSize, canvasSize),
+          boxPaint,
+        );
+      }
+    } else if (labelType == LabelType.bbox) {
+      if (points.length == 1) {
+        final point = points[0];
+        canvas.drawCircle(convertToCanvasOffset(point.offset, imageSize, canvasSize), 4, circlePaint);
+      } else if (points.length > 1) {
+        final p1 = points[0];
+        if (isDeleting) {
+          canvas.drawCircle(convertToCanvasOffset(p1.offset, imageSize, canvasSize), 4, deletePaint);
+        }
+        canvas.drawCircle(convertToCanvasOffset(p1.offset, imageSize, canvasSize), 4, circlePaint);
+        final p2 = points[1];
+        if (isDeleting) {
+          canvas.drawCircle(convertToCanvasOffset(p2.offset, imageSize, canvasSize), 4, deletePaint);
+        }
+        canvas.drawCircle(convertToCanvasOffset(p2.offset, imageSize, canvasSize), 4, circlePaint);
+        if (isDeleting) {
+          canvas.drawRect(
+            ui.Rect.fromPoints(
+              convertToCanvasOffset(p1.offset, imageSize, canvasSize),
+              convertToCanvasOffset(p2.offset, imageSize, canvasSize),
+            ),
+            deletePaint,
+          );
+        }
+        canvas.drawRect(
+          ui.Rect.fromPoints(
+            convertToCanvasOffset(p1.offset, imageSize, canvasSize),
+            convertToCanvasOffset(p2.offset, imageSize, canvasSize),
+          ),
+          boxPaint,
+        );
+      }
     }
   }
 
@@ -104,15 +179,14 @@ class ImagePainter extends CustomPainter {
     paintImage(canvas: canvas, rect: Rect.fromLTRB(0, 0, size.width, size.height), image: image);
     drawPoints(canvas, size, points, null, imageSize.source);
     for (final feature in features) {
-      drawPoints(canvas, size, feature.points, feature.className, imageSize.source);
+      drawPoints(
+        canvas,
+        size,
+        feature.points,
+        feature.className,
+        imageSize.source,
+        deletingFeatureId == feature.id,
+      );
     }
-  }
-
-  @override
-  bool shouldRepaint(ImagePainter oldDelegate) {
-    return image != oldDelegate.image ||
-        points != oldDelegate.points ||
-        features != oldDelegate.features ||
-        features.length != features.length;
   }
 }
