@@ -32,10 +32,10 @@ class FolderBloc extends Bloc<FolderEvent, FolderState> with SubscriptionBloc {
     on<_ImagesChanged>((event, emit) {
       emit(state.copyWith(images: event.images, isLoadingImages: false));
     });
-    on<_DeleteImageRequested>((event, emit) {
+    on<_DeleteImageRequested>((event, emit) async {
       emit(state.copyWith(isDeletingImage: true));
       try {
-        _imagesRepository.deleteImage(event.id);
+        await _imagesRepository.deleteImage(event.id);
         add(const FolderEvent.loadFolderRequested());
       } catch (e) {
         emit(state.copyWith(error: createErrorMessage(e)));

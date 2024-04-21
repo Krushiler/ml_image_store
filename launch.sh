@@ -1,3 +1,5 @@
+ps -ef | grep 'build/bin/server.dart' | grep -v grep | awk '{print $2}' | xargs -r kill -9
+
 cd /home/krushiler/ml_image_store
 
 git pull origin master
