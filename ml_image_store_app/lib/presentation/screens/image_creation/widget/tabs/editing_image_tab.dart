@@ -23,6 +23,7 @@ class EditingImageTab extends StatefulWidget {
 class _EditingImageTabState extends State<EditingImageTab> {
   ui.Image? image;
   ui.Size? canvasSize;
+  bool isBbox = false;
 
   final List<Point> points = [];
 
@@ -47,6 +48,13 @@ class _EditingImageTabState extends State<EditingImageTab> {
   }
 
   final nameTextController = TextEditingController();
+
+  void _clear() {
+    nameTextController.clear();
+    setState(() {
+      points.clear();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,10 +117,7 @@ class _EditingImageTabState extends State<EditingImageTab> {
                       children: [
                         IconButton(
                           onPressed: () {
-                            nameTextController.clear();
-                            setState(() {
-                              points.clear();
-                            });
+                            _clear();
                           },
                           icon: const Icon(Icons.clear),
                         ),
@@ -136,10 +141,7 @@ class _EditingImageTabState extends State<EditingImageTab> {
                                           ),
                                         ),
                                       );
-                                  nameTextController.clear();
-                                  setState(() {
-                                    points.clear();
-                                  });
+                                  _clear();
                                 }
                               : null,
                           icon: const Icon(Icons.add),
