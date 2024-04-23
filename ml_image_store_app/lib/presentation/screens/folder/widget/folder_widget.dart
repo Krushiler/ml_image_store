@@ -45,12 +45,20 @@ class _FolderWidgetState extends State<FolderWidget> {
               ),
               actions: [
                 if (state.folder != null)
-                  IconButton(
-                    onPressed: () {
-                      launchUrl(
-                          Uri.parse('${context.read<ServerConfig>().baseUrl}/folders/${state.folder?.id}/download'));
-                    },
+                  PopupMenuButton(
                     icon: const Icon(Icons.download),
+                    tooltip: 'Download',
+                    offset: const Offset(0, 48),
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        child: const Text('Full json'),
+                        onTap: () {
+                          launchUrl(
+                            Uri.parse('${context.read<ServerConfig>().baseUrl}/folders/${state.folder?.id}/download'),
+                          );
+                        },
+                      )
+                    ],
                   ),
               ],
             ),

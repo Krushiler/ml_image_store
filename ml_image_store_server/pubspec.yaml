@@ -13,6 +13,7 @@ dependencies:
 
   ml_image_store:
     path: ../ml_image_store
+  image: ^4.1.7
   postgres: ^3.1.2
   shelf_cors_headers: ^0.1.5
   uuid:
