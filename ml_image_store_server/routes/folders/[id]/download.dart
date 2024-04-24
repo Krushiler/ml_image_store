@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:archive/archive_io.dart' as archive;
@@ -29,7 +30,9 @@ Future<Response> _onGet(RequestContext context, String id) async {
   final images = await repository.getImages(id);
 
   final type = context.request.url.queryParameters['type'] ?? 'fullJson';
-  final size = int.tryParse(context.request.url.queryParameters['type'] ?? '') ?? 640;
+  final width = int.tryParse(context.request.url.queryParameters['width'] ?? '');
+  final height = int.tryParse(context.request.url.queryParameters['height'] ?? '');
+  final maintainAspect = bool.tryParse(context.request.url.queryParameters['maintainAspect'] ?? '') ?? false;
 
   final filePath = './temp/${folder.id}-$type.zip';
 
@@ -39,9 +42,9 @@ Future<Response> _onGet(RequestContext context, String id) async {
   }
 
   final bytes = switch (type) {
-    'yolo' => _encodeYolo(filePath, images, size),
-    'fullJson' => _encodeFullJson(filePath, images, size),
-    String() => _encodeFullJson(filePath, images, size),
+    'yolo' => _encodeYolo(filePath, images, width, height, maintainAspect),
+    'fullJson' => _encodeFullJson(filePath, images, width, height, maintainAspect),
+    String() => _encodeFullJson(filePath, images, width, height, maintainAspect),
   };
 
   return Response.bytes(
@@ -52,27 +55,57 @@ Future<Response> _onGet(RequestContext context, String id) async {
   );
 }
 
-Point resizePoint(Point point, int size, int originalWidth, int originalHeight) {
+Point resizePoint(Point point, int width, int height, int originalWidth, int originalHeight, bool maintainAspect) {
+  if (!maintainAspect) {
+    return Point(
+      x: ((point.x / originalWidth) * width).toInt(),
+      y: ((point.y / originalHeight) * height).toInt(),
+      id: point.id,
+    );
+  }
+  final double widthMultiplier = width / originalWidth;
+  final double heightMultiplier = height / originalHeight;
+
+  final double sizeMultiplier = min(widthMultiplier, heightMultiplier);
+
+  final imageViewWidth = originalWidth * sizeMultiplier;
+  final imageViewHeight = originalHeight * sizeMultiplier;
+
+  final imageStartX = (width - imageViewWidth) / 2;
+  final imageStartY = (height - imageViewHeight) / 2;
+
   return Point(
-    x: ((point.x / originalWidth) * size).toInt(),
-    y: ((point.y / originalHeight) * size).toInt(),
+    x: (imageStartX + point.x * sizeMultiplier).toInt(),
+    y: (imageStartY + point.y * sizeMultiplier).toInt(),
     id: point.id,
   );
 }
 
-Feature resizeFeature(Feature feature, int size, int originalWidth, int originalHeight) {
+Feature resizeFeature(
+  Feature feature,
+  int width,
+  int height,
+  int originalWidth,
+  int originalHeight,
+  bool maintainAspect,
+) {
   return Feature(
     id: feature.id,
-    points: feature.points.map((e) => resizePoint(e, size, originalWidth, originalHeight)).toList(),
+    points: feature.points
+        .map((e) => resizePoint(e, width, height, originalWidth, originalHeight, maintainAspect))
+        .toList(),
     className: feature.className,
   );
 }
 
-ImageData resizeImage(Image image, int size) {
+ImageData resizeImage(Image image, int? width, int? height, bool maintainAspect) {
   final bytes = File('./uploads/${image.fileId}.png').readAsBytesSync();
-  final img = img_util.decodePng(bytes);
-  final resized = img_util.copyResize(img!, width: size, height: size);
-  final pointsData = image.features.map((e) => resizeFeature(e, size, img.width, img.height));
+  final img = img_util.decodeImage(bytes);
+  if (width == null || height == null) {
+    return ImageData(img!, image);
+  }
+  final resized = img_util.copyResize(img!, width: width, height: height, maintainAspect: maintainAspect);
+  final pointsData = image.features.map((e) => resizeFeature(e, width, height, img.width, img.height, maintainAspect));
 
   return ImageData(resized, Image(id: image.id, features: pointsData.toList(), fileId: image.fileId));
 }
@@ -84,14 +117,18 @@ class ImageData {
   final Image image;
 }
 
-Uint8List _encodeFullJson(String filePath, List<Image> images, int size) {
+Uint8List _encodeFullJson(String filePath, List<Image> images, int? width, int? height, bool maintainAspect) {
   final encoder = archive.ZipFileEncoder()..create(filePath);
 
   for (var i = 0; i < images.length; i++) {
-    final image = resizeImage(images[i], size);
+    final image = resizeImage(images[i], width, height, maintainAspect);
+
+    final encodedImage = img_util.encodePng(image.bytes);
+    final pointsString = jsonEncode(image.image.features);
+
     encoder
-      ..addArchiveFile(archive.ArchiveFile('image-$i.png', 0, img_util.encodePng(image.bytes)))
-      ..addArchiveFile(archive.ArchiveFile('points-$i.json', 0, jsonEncode(image.image.features)));
+      ..addArchiveFile(archive.ArchiveFile('image-$i.png', encodedImage.length, encodedImage))
+      ..addArchiveFile(archive.ArchiveFile('points-$i.json', pointsString.codeUnits.length, pointsString));
   }
 
   encoder.close();
@@ -99,7 +136,7 @@ Uint8List _encodeFullJson(String filePath, List<Image> images, int size) {
   return File(filePath).readAsBytesSync();
 }
 
-Uint8List _encodeYolo(String filePath, List<Image> images, int size) {
+Uint8List _encodeYolo(String filePath, List<Image> images, int? width, int? height, bool maintainAspect) {
   final encoder = archive.ZipFileEncoder()..create(filePath);
 
   final labels = <String, int>{};
@@ -107,7 +144,7 @@ Uint8List _encodeYolo(String filePath, List<Image> images, int size) {
   var labelIndex = 0;
 
   for (var i = 0; i < images.length; i++) {
-    final image = resizeImage(images[i], size);
+    final image = resizeImage(images[i], width, height, maintainAspect);
 
     final pointsBuffer = StringBuffer();
 
@@ -118,22 +155,24 @@ Uint8List _encodeYolo(String filePath, List<Image> images, int size) {
         labelsReversed[labelIndex] = feature.className;
         labelIndex++;
       }
-      final centerX = (feature.points[0].x - feature.points[1].x).abs() / 2;
-      final centerY = (feature.points[0].y - feature.points[1].y).abs() / 2;
-      final width = (feature.points[0].x - feature.points[1].x).abs();
-      final height = (feature.points[0].y - feature.points[1].y).abs();
+      final centerX = (feature.points[0].x + feature.points[1].x).abs() / 2;
+      final centerY = (feature.points[0].y + feature.points[1].y).abs() / 2;
+      final centerWidth = (feature.points[0].x - feature.points[1].x).abs();
+      final centerHeight = (feature.points[0].y - feature.points[1].y).abs();
 
-      final yoloCenterX = centerX / size;
-      final yoloCenterY = centerY / size;
-      final yoloWidth = width / size;
-      final yoloHeight = height / size;
-
+      final yoloCenterX = centerX / (width ?? image.bytes.width);
+      final yoloCenterY = centerY / (height ?? image.bytes.height);
+      final yoloWidth = centerWidth / (width ?? image.bytes.width);
+      final yoloHeight = centerHeight / (height ?? image.bytes.height);
       pointsBuffer.writeln('${labels[feature.className]} $yoloCenterX $yoloCenterY $yoloWidth $yoloHeight');
     }
 
+    final pointsString = pointsBuffer.toString();
+    final encodedImage = img_util.encodePng(image.bytes);
+
     encoder
-      ..addArchiveFile(archive.ArchiveFile('images/image-$i.png', 0, img_util.encodePng(image.bytes)))
-      ..addArchiveFile(archive.ArchiveFile('labels/labels-$i.json', 0, pointsBuffer.toString()));
+      ..addArchiveFile(archive.ArchiveFile('images/image-$i.png', encodedImage.length, encodedImage))
+      ..addArchiveFile(archive.ArchiveFile('labels/image-$i.txt', pointsString.codeUnits.length, pointsString));
   }
 
   final classesBuffer = StringBuffer();
@@ -142,8 +181,10 @@ Uint8List _encodeYolo(String filePath, List<Image> images, int size) {
     classesBuffer.writeln(labelsReversed[i]);
   }
 
+  final classesString = classesBuffer.toString();
+
   encoder
-    ..addArchiveFile(archive.ArchiveFile('classes.txt', 0, classesBuffer.toString()))
+    ..addArchiveFile(archive.ArchiveFile('classes.txt', classesString.codeUnits.length, classesString))
     ..close();
 
   return File(filePath).readAsBytesSync();
