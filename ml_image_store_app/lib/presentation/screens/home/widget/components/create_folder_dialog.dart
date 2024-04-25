@@ -50,9 +50,9 @@ class _CreateFolderDialogState extends State<CreateFolderDialog> {
                     }
                   : null,
               child: const Text('Create'),
-            )
+            ),
           ],
-        )
+        ),
       ],
     );
   }

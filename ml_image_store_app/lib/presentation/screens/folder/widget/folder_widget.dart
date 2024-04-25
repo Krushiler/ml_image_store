@@ -4,10 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:ml_image_store_app/data/model/server_config.dart';
 import 'package:ml_image_store_app/presentation/navigation/navigation.dart';
 import 'package:ml_image_store_app/presentation/screens/folder/bloc/folder_bloc.dart';
+import 'package:ml_image_store_app/presentation/screens/folder/widget/components/dataset_download_dialog.dart';
 import 'package:ml_image_store_app/presentation/screens/folder/widget/components/image_list_item.dart';
 import 'package:ml_image_store_app/presentation/style/kit/dimens.dart';
 import 'package:ml_image_store_app/presentation/style/theme/app_context_extension.dart';
 import 'package:ml_image_store_app/presentation/util/snackbar_util.dart';
+import 'package:ml_image_store_app/presentation/widgets/dialog/app_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class FolderWidget extends StatefulWidget {
@@ -51,13 +53,30 @@ class _FolderWidgetState extends State<FolderWidget> {
                     offset: const Offset(0, 48),
                     itemBuilder: (context) => [
                       PopupMenuItem(
-                        child: const Text('Full json'),
+                        child: const Text('Full Json'),
                         onTap: () {
                           launchUrl(
                             Uri.parse('${context.read<ServerConfig>().baseUrl}/folders/${state.folder?.id}/download'),
                           );
                         },
-                      )
+                      ),
+                      PopupMenuItem(
+                        child: const Text('Dataset'),
+                        onTap: () async {
+                          final result = await context.showAppDialog<DatasetDownloadResult>(
+                            child: const DatasetDownloadDialog(),
+                          );
+                          if (result == null) return;
+                          launchUrl(
+                            Uri.parse(
+                              '${context.read<ServerConfig>().baseUrl}/folders/${state.folder?.id}/download'
+                              '?type=${result.datasetType.name}'
+                              '&width=${result.width}&height=${result.height}'
+                              '&maintainAspect=${result.maintainAspectRatio}',
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   ),
               ],
