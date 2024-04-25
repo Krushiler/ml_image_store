@@ -109,6 +109,21 @@ class _EditingImageTabState extends State<EditingImageTab> with TickerProviderSt
                                 if (nearestFeature != null) {
                                   deletingFeatureId = nearestFeature.id;
                                   deleteAnimationController.forward(from: 0);
+                                } else if (state.folder?.type == LabelType.polygon) {
+                                  deleteAnimationController.stop();
+                                  deleteAnimationController.value = 0;
+                                  deletingFeatureId = null;
+                                  if (canvasSize == null) return;
+                                  final offset = convertToImageOffset(
+                                    event.localPosition,
+                                    ui.Size(image!.width.toDouble(), image!.height.toDouble()),
+                                    canvasSize!,
+                                  );
+                                  setState(() {
+                                    points.add(
+                                      Point(x: offset.dx.toInt(), y: offset.dy.toInt(), id: const Uuid().v4()),
+                                    );
+                                  });
                                 }
                               },
                               onTapUp: (event) {
@@ -121,21 +136,24 @@ class _EditingImageTabState extends State<EditingImageTab> with TickerProviderSt
                                 }
                               },
                               onPanStart: (event) {
-                                deleteAnimationController.stop();
-                                deleteAnimationController.value = 0;
-                                deletingFeatureId = null;
-                                if (canvasSize == null) return;
-                                final offset = convertToImageOffset(
-                                  event.localPosition,
-                                  ui.Size(image!.width.toDouble(), image!.height.toDouble()),
-                                  canvasSize!,
-                                );
-                                setState(() {
-                                  if (state.folder?.type == LabelType.bbox) {
-                                    points.clear();
-                                  }
-                                  points.add(Point(x: offset.dx.toInt(), y: offset.dy.toInt(), id: const Uuid().v4()));
-                                });
+                                if (state.folder?.type == LabelType.bbox) {
+                                  deleteAnimationController.stop();
+                                  deleteAnimationController.value = 0;
+                                  deletingFeatureId = null;
+                                  if (canvasSize == null) return;
+                                  final offset = convertToImageOffset(
+                                    event.localPosition,
+                                    ui.Size(image!.width.toDouble(), image!.height.toDouble()),
+                                    canvasSize!,
+                                  );
+                                  setState(() {
+                                    if (state.folder?.type == LabelType.bbox) {
+                                      points.clear();
+                                    }
+                                    points
+                                        .add(Point(x: offset.dx.toInt(), y: offset.dy.toInt(), id: const Uuid().v4()));
+                                  });
+                                }
                               },
                               onPanUpdate: (event) {
                                 if (state.folder?.type == LabelType.bbox) {

@@ -1,21 +1,9 @@
-import 'package:rxdart/rxdart.dart';
+import 'dart:async';
 
-abstract class BaseStorage<T> {
-  final BehaviorSubject<T> _data = BehaviorSubject();
+abstract interface class BaseStorage<T> {
+  Stream<T?> watch();
 
-  BaseStorage({T? initialData}) {
-    if (initialData != null) {
-      _data.add(initialData);
-    }
-  }
+  FutureOr<T?> get();
 
-  Stream<T> watch() => _data.stream;
-
-  T get() => _data.value;
-
-  T? getOrNull() => _data.valueOrNull;
-
-  void put(T data) {
-    _data.add(data);
-  }
+  FutureOr<void> put(T data);
 }

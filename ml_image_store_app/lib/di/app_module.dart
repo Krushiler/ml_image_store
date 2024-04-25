@@ -43,7 +43,13 @@ class AppModule extends StatelessWidget {
 
         /// Repository
         RepositoryProvider(create: (context) => AuthRepository(context.read(), context.read())),
-        RepositoryProvider(create: (context) => FoldersRepository(context.read(), context.read(), context.read())),
+        RepositoryProvider(
+          create: (context) => FoldersRepository(
+            context.read(),
+            context.read<FoldersStorage>(),
+            context.read<FolderImagesStorage>(),
+          ),
+        ),
         RepositoryProvider(create: (context) => ImagesRepository(context.read())),
 
         /// Interactor

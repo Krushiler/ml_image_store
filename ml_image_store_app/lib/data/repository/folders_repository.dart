@@ -1,14 +1,15 @@
+import 'package:collection/collection.dart';
 import 'package:ml_image_store/model/folder/folder.dart';
 import 'package:ml_image_store/request/create_folder_request.dart';
 import 'package:ml_image_store/response/folder_response.dart';
 import 'package:ml_image_store_app/data/network/ml_image_api.dart';
+import 'package:ml_image_store_app/data/storage/base/base_storage.dart';
 import 'package:ml_image_store_app/data/storage/folders_storage.dart';
-import 'package:collection/collection.dart';
 
 class FoldersRepository {
   final MlImageApi _api;
   final FoldersStorage _storage;
-  final FolderImagesStorage _imagesStorage;
+  final BaseStorage<List<FolderResponse>> _imagesStorage;
 
   FoldersRepository(this._api, this._storage, this._imagesStorage);
 

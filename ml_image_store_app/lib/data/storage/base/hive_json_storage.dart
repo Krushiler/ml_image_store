@@ -1,13 +1,14 @@
 import 'dart:convert';
 
 import 'package:hive/hive.dart';
+import 'package:ml_image_store_app/data/storage/base/base_storage.dart';
 import 'package:ml_image_store_app/data/storage/base/hive_json_object.dart';
 import 'package:rxdart/rxdart.dart';
 
 typedef FromJsonFunc<T> = T Function(Map<String, dynamic> json);
 typedef ToJsonFunc<T> = Map<String, dynamic> Function(T value);
 
-class HiveJsonStorage<T> {
+class HiveJsonStorage<T> implements BaseStorage<T> {
   static const String _jsonBoxId = 'json_box';
 
   final BehaviorSubject<T?> _subject = BehaviorSubject<T?>();
@@ -44,8 +45,10 @@ class HiveJsonStorage<T> {
     _subject.add(value);
   }
 
+  @override
   Stream<T?> watch() => _subject.stream;
 
+  @override
   Future<T?> get() async {
     return _subject.valueOrNull ?? (await _getFromBox());
   }
@@ -63,6 +66,7 @@ class HiveJsonStorage<T> {
     }
   }
 
+  @override
   Future<void> put(T value) async {
     _subject.add(value);
     final json = jsonEncode(_toJson(value));
