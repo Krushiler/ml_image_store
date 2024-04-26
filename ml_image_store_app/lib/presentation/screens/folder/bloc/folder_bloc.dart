@@ -63,7 +63,7 @@ class FolderState with _$FolderState {
     @Default(false) isDeletingImage,
   }) = _FolderState;
 
-  bool get isLoading => isLoadingImages || isDeletingImage;
+  bool get isLoading => isLoadingImages || isDeletingImage || folder == null;
 }
 
 @freezed

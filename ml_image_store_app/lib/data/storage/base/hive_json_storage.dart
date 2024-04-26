@@ -73,6 +73,7 @@ class HiveJsonStorage<T> implements BaseStorage<T> {
     (await _getBox()).put(_key, HiveJsonObject(json));
   }
 
+  @override
   Future<void> clear() async {
     _subject.add(null);
     await (await _getBox()).delete(_key);

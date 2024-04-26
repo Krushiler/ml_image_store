@@ -6,4 +6,6 @@ abstract interface class BaseStorage<T> {
   FutureOr<T?> get();
 
   FutureOr<void> put(T data);
+
+  FutureOr<void> clear();
 }

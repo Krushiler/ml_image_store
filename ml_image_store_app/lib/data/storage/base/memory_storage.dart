@@ -22,4 +22,9 @@ abstract class MemoryStorage<T> implements BaseStorage<T> {
   void put(T data) {
     _data.add(data);
   }
+
+  @override
+  FutureOr<void> clear() {
+    _data.add(null);
+  }
 }
