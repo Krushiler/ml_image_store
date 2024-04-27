@@ -16,11 +16,17 @@ class ImagesRepository {
     List<Feature> features,
     String? imageId,
   ) async {
-    if (imageId != null) {
-      await deleteImage(imageId);
-    }
     final id = imageId ?? const Uuid().v4();
-    await _storage.createImage(id, filePath, folderId);
+    if (imageId != null) {
+      final features = (await _storage.getFeatures(imageId)).map((e) => e.toColumnMap());
+      for (final feature in features) {
+        await _storage.deleteFeaturePoints(feature['id'].toString());
+      }
+      await _storage.deleteImageFeatures(imageId);
+      await _storage.updateImage(id, filePath);
+    } else {
+      await _storage.createImage(id, filePath, folderId, DateTime.now().millisecondsSinceEpoch);
+    }
     for (final feature in features) {
       final featureId = const Uuid().v4();
       await _storage.createFeature(featureId, id, feature);
@@ -80,6 +86,7 @@ class ImagesRepository {
           id: imageMap['id'].toString(),
           features: features,
           fileId: imageMap['path'].toString(),
+          createdAt: DateTime.fromMicrosecondsSinceEpoch(imageMap['createdat']),
         ),
       );
     }
@@ -93,6 +100,7 @@ class ImagesRepository {
       id: e['id'].toString(),
       fileId: e['path'].toString(),
       features: await getFeatures(id),
+      createdAt: DateTime.fromMicrosecondsSinceEpoch(e['createdat']),
     );
   }
 }

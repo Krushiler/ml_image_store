@@ -10,6 +10,7 @@ class Image with _$Image {
     required String id,
     required List<Feature> features,
     required String fileId,
+    required DateTime createdAt,
   }) = _Image;
 
   factory Image.fromJson(Map<String, dynamic> json) => _$ImageFromJson(json);

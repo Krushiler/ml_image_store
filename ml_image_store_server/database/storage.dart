@@ -212,21 +212,37 @@ INSERT INTO folders (id, name, ownerId, type)
     });
   }
 
+  Future<void> updateImage(String id, String path) {
+    return execute((conn) async {
+      await conn.execute(
+        r'''
+UPDATE images SET path=$2 WHERE id=$1
+      ''',
+        parameters: [
+          id,
+          path,
+        ],
+      );
+    });
+  }
+
   Future<void> createImage(
     String id,
     String path,
     String folderId,
+    int createdAt,
   ) {
     return execute((conn) async {
       await conn.execute(
         r'''
-INSERT INTO images (id, path, folderId)
-      VALUES ($1, $2, $3)
+INSERT INTO images (id, path, folderId, createdAt)
+      VALUES ($1, $2, $3, $4)
       ''',
         parameters: [
           id,
           path,
           folderId,
+          createdAt,
         ],
       );
     });
@@ -243,11 +259,7 @@ INSERT INTO images (id, path, folderId)
 INSERT INTO features (id, imageId, classname)
       VALUES ($1, $2, $3)
       ''',
-        parameters: [
-          id,
-          imageId,
-          feature.className
-        ],
+        parameters: [id, imageId, feature.className],
       );
     });
   }

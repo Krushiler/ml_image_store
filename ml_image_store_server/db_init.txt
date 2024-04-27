@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS images(
      id TEXT NOT NULL,
      path TEXT NOT NULL,
-     folderId TEXT NOT NULL
+     folderId TEXT NOT NULL,
+     createdAt BIGINT NOT NULL
      );
 
 CREATE TABLE IF NOT EXISTS folders (
