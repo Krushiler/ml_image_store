@@ -47,16 +47,16 @@ class CsvEncoder implements DownloadEncoder {
 
           for (final p in feature.points) {
             if (p.x < minX) {
-              minX = feature.points[0].x;
+              minX = p.x;
             }
             if (p.y < minY) {
-              minY = feature.points[0].y;
+              minY = p.y;
             }
             if (p.x > maxX) {
-              maxX = feature.points[0].x;
+              maxX = p.x;
             }
             if (p.y > maxY) {
-              maxY = feature.points[0].y;
+              maxY = p.y;
             }
             segmentation.add([p.x, p.y]);
           }
