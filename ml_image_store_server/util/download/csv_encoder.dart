@@ -13,54 +13,92 @@ class CsvEncoder implements DownloadEncoder {
   FutureOr<Uint8List> encode(String filePath, List<Image> images, int? width, int? height, bool maintainAspect) {
     final encoder = archive.ZipFileEncoder()..create(filePath);
 
-    final labels = <String, int>{};
-    final labelsReversed = <int, String>{};
-    var labelIndex = 0;
+    try {
+      final labels = <String, int>{};
+      final labelsReversed = <int, String>{};
+      var labelIndex = 0;
 
-    for (var i = 0; i < images.length; i++) {
-      final image = resizeImage(images[i], width, height, maintainAspect);
+      final imageAnnotations = StringBuffer();
+      final imagesMaps = StringBuffer();
+      final categoriesMaps = StringBuffer();
 
-      final pointsBuffer = StringBuffer();
+      imageAnnotations.writeln('id, image_id, xmin, ymin, xmax, ymax, class_id');
+      imagesMaps.writeln('id, width, height, file_name');
+      categoriesMaps.writeln('id, class_name');
 
-      for (final feature in image.image.features) {
-        if (feature.points.length != 2) continue;
-        if (labels[feature.className] == null) {
-          labels[feature.className] = labelIndex;
-          labelsReversed[labelIndex] = feature.className;
-          labelIndex++;
+      int featureId = 0;
+      int imageId = 0;
+
+      for (var i = 0; i < images.length; i++) {
+        imageId++;
+        final image = resizeImage(images[i], width, height, maintainAspect);
+
+        for (var j = 0; j < image.image.features.length; j++) {
+          featureId++;
+          final feature = image.image.features[j];
+          if (labels[feature.className] == null) {
+            labels[feature.className] = labelIndex;
+            labelsReversed[labelIndex] = feature.className;
+            labelIndex++;
+          }
+          int minX = image.bytes.width, minY = image.bytes.height, maxX = 0, maxY = 0;
+
+          final segmentation = <List<int>>[];
+
+          for (final p in feature.points) {
+            if (p.x < minX) {
+              minX = feature.points[0].x;
+            }
+            if (p.y < minY) {
+              minY = feature.points[0].y;
+            }
+            if (p.x > maxX) {
+              maxX = feature.points[0].x;
+            }
+            if (p.y > maxY) {
+              maxY = feature.points[0].y;
+            }
+            segmentation.add([p.x, p.y]);
+          }
+
+          final bbox = <int>[minX, minY, maxX - minX, maxY - minY];
+
+          imageAnnotations.writeln(
+            '${featureId}, ${imageId}, ${bbox[0]}, ${bbox[1]}, ${bbox[2]}, ${bbox[3]}, ${labels[feature.className]}',
+          );
         }
-        final centerX = (feature.points[0].x + feature.points[1].x).abs() / 2;
-        final centerY = (feature.points[0].y + feature.points[1].y).abs() / 2;
-        final centerWidth = (feature.points[0].x - feature.points[1].x).abs();
-        final centerHeight = (feature.points[0].y - feature.points[1].y).abs();
 
-        final yoloCenterX = centerX / (width ?? image.bytes.width);
-        final yoloCenterY = centerY / (height ?? image.bytes.height);
-        final yoloWidth = centerWidth / (width ?? image.bytes.width);
-        final yoloHeight = centerHeight / (height ?? image.bytes.height);
-        pointsBuffer.writeln('${labels[feature.className]} $yoloCenterX $yoloCenterY $yoloWidth $yoloHeight');
+        imagesMaps.writeln('${imageId}, ${image.bytes.width}, ${image.bytes.height}, images/image-$imageId.png');
+
+        final encodedImage = img_util.encodePng(image.bytes);
+
+        encoder.addArchiveFile(archive.ArchiveFile('images/image-$imageId.png', encodedImage.length, encodedImage));
       }
 
-      final pointsString = pointsBuffer.toString();
-      final encodedImage = img_util.encodePng(image.bytes);
+      for (var i = 0; i < labelIndex; i++) {
+        categoriesMaps.writeln('${i}, ${labelsReversed[i]}');
+      }
+
+      final categoriesMapsString = categoriesMaps.toString();
+      final imagesMapsString = imagesMaps.toString();
+      final imageAnnotationsString = imageAnnotations.toString();
 
       encoder
-        ..addArchiveFile(archive.ArchiveFile('images/image-$i.png', encodedImage.length, encodedImage))
-        ..addArchiveFile(archive.ArchiveFile('labels/image-$i.txt', pointsString.codeUnits.length, pointsString));
+        ..addArchiveFile(
+          archive.ArchiveFile('categories.csv', categoriesMapsString.length, categoriesMapsString.codeUnits),
+        )
+        ..addArchiveFile(
+          archive.ArchiveFile('images.csv', imagesMapsString.length, imagesMapsString.codeUnits),
+        )
+        ..addArchiveFile(
+          archive.ArchiveFile('annotations.csv', imageAnnotationsString.length, imageAnnotationsString.codeUnits),
+        )
+        ..close();
+
+      return File(filePath).readAsBytesSync();
+    } catch (_) {
+      encoder.close();
+      rethrow;
     }
-
-    final classesBuffer = StringBuffer();
-
-    for (var i = 0; i < labelIndex; i++) {
-      classesBuffer.writeln(labelsReversed[i]);
-    }
-
-    final classesString = classesBuffer.toString();
-
-    encoder
-      ..addArchiveFile(archive.ArchiveFile('classes.txt', classesString.codeUnits.length, classesString))
-      ..close();
-
-    return File(filePath).readAsBytesSync();
   }
 }
