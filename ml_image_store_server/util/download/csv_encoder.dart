@@ -22,7 +22,7 @@ class CsvEncoder implements DownloadEncoder {
       final imagesMaps = StringBuffer();
       final categoriesMaps = StringBuffer();
 
-      imageAnnotations.writeln('id, image_id, xmin, ymin, xmax, ymax, class_id');
+      imageAnnotations.writeln('id, image_id, x, y, width, height, class_id');
       imagesMaps.writeln('id, width, height, file_name');
       categoriesMaps.writeln('id, class_name');
 
