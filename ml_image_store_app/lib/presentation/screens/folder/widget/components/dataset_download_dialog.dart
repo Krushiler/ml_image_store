@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:ml_image_store_app/presentation/style/kit/gap.dart';
 import 'package:ml_image_store_app/presentation/style/theme/app_context_extension.dart';
+import 'package:ml_image_store/model/folder/folder.dart';
 
 class DatasetDownloadDialog extends StatefulWidget {
-  const DatasetDownloadDialog({super.key});
+  final LabelType labelType;
+
+  const DatasetDownloadDialog({super.key, required this.labelType});
 
   @override
   State<DatasetDownloadDialog> createState() => _DatasetDownloadDialogState();
@@ -34,6 +37,7 @@ class _DatasetDownloadDialogState extends State<DatasetDownloadDialog> {
             });
           },
           items: DatasetType.values
+              .where((element) => element.labelTypes.contains(widget.labelType))
               .map(
                 (e) => DropdownMenuItem<DatasetType>(value: e, child: Text(e.representation)),
               )
@@ -115,14 +119,17 @@ class _DatasetDownloadDialogState extends State<DatasetDownloadDialog> {
 }
 
 enum DatasetType {
-  fullJson('fullJson', 'Json'),
-  yolo('yolo', 'YOLO'),
+  fullJson('fullJson', 'Json', [LabelType.bbox, LabelType.polygon]),
+  yolo('yolo', 'YOLO', [LabelType.bbox]),
+  coco('coco', 'COCO', [LabelType.bbox, LabelType.polygon]),
+  csv('csv', 'CSV', [LabelType.bbox]),
   ;
 
   final String name;
   final String representation;
+  final List<LabelType> labelTypes;
 
-  const DatasetType(this.name, this.representation);
+  const DatasetType(this.name, this.representation, this.labelTypes);
 }
 
 class DatasetDownloadResult {

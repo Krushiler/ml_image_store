@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ml_image_store/model/folder/folder.dart';
 import 'package:ml_image_store_app/data/model/server_config.dart';
 import 'package:ml_image_store_app/presentation/navigation/navigation.dart';
 import 'package:ml_image_store_app/presentation/screens/folder/bloc/folder_bloc.dart';
@@ -64,7 +65,7 @@ class _FolderWidgetState extends State<FolderWidget> {
                         child: const Text('Dataset'),
                         onTap: () async {
                           final result = await context.showAppDialog<DatasetDownloadResult>(
-                            child: const DatasetDownloadDialog(),
+                            child: DatasetDownloadDialog(labelType: state.folder?.type ?? LabelType.bbox),
                           );
                           if (result == null) return;
                           launchUrl(
