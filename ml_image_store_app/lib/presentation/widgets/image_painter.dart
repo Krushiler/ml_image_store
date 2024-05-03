@@ -13,8 +13,8 @@ class ImagePainter extends CustomPainter {
   final ValueChanged<Size>? sizeChanged;
   final Size? size;
   final LabelType labelType;
-  final String? deletingFeatureId;
-  final double deleteAnimationValue;
+  final String? selectedFeatureId;
+  final double selectionProgress;
 
   double get aspectRatio => image.width / image.height;
 
@@ -25,8 +25,8 @@ class ImagePainter extends CustomPainter {
     this.points = const [],
     this.sizeChanged,
     this.size,
-    this.deletingFeatureId,
-    this.deleteAnimationValue = 0,
+    this.selectedFeatureId,
+    this.selectionProgress = 0,
   });
 
   @override
@@ -37,8 +37,8 @@ class ImagePainter extends CustomPainter {
         features != oldDelegate.features ||
         features.length != oldDelegate.features.length ||
         labelType != oldDelegate.labelType ||
-        deletingFeatureId != oldDelegate.deletingFeatureId ||
-        deleteAnimationValue != oldDelegate.deleteAnimationValue;
+        selectedFeatureId != oldDelegate.selectedFeatureId ||
+        selectionProgress != oldDelegate.selectionProgress;
   }
 
   late final featureColorMap = _createColorMap();
@@ -81,7 +81,7 @@ class ImagePainter extends CustomPainter {
     final Paint deletePaint = Paint()
       ..color = Colors.red
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2 + deleteAnimationValue * 4;
+      ..strokeWidth = selectionProgress * 8;
 
     if (name != null) {
       final textStyle = TextStyle(
@@ -185,7 +185,7 @@ class ImagePainter extends CustomPainter {
         feature.points,
         feature.className,
         imageSize.source,
-        deletingFeatureId == feature.id,
+        selectedFeatureId == feature.id,
       );
     }
   }

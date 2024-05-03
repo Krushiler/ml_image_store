@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:ml_image_store/model/image/point.dart' as domain;
 import 'package:ml_image_store_app/data/model/server_config.dart';
+import 'package:uuid/uuid.dart';
 
 String createImageUrl(ServerConfig config, String imageId) {
   return '${config.baseUrl}/files/$imageId';
@@ -10,6 +11,10 @@ String createImageUrl(ServerConfig config, String imageId) {
 
 extension PointUiExtension on domain.Point {
   Offset get offset => Offset(x.toDouble(), y.toDouble());
+}
+
+domain.Point createPointFromOffset(Offset offset) {
+  return domain.Point(id: const Uuid().v4(), x: offset.dx.toInt(), y: offset.dy.toInt());
 }
 
 Offset convertToCanvasOffset(Offset original, Size imageSize, Size canvasSize) {

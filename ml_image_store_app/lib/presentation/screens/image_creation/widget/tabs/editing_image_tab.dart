@@ -7,9 +7,14 @@ import 'package:ml_image_store/model/folder/folder.dart';
 import 'package:ml_image_store/model/image/feature.dart';
 import 'package:ml_image_store/model/image/point.dart';
 import 'package:ml_image_store_app/presentation/screens/image_creation/bloc/image_creation_bloc.dart';
+import 'package:ml_image_store_app/presentation/screens/image_creation/widget/tools/bbox_labeling_tool.dart';
+import 'package:ml_image_store_app/presentation/screens/image_creation/widget/tools/labeling_tool.dart';
+import 'package:ml_image_store_app/presentation/screens/image_creation/widget/tools/polygon_labeling_tool.dart';
 import 'package:ml_image_store_app/presentation/style/kit/dimens.dart';
 import 'package:ml_image_store_app/presentation/style/kit/gap.dart';
+import 'package:ml_image_store_app/presentation/style/theme/app_context_extension.dart';
 import 'package:ml_image_store_app/presentation/util/image_util.dart';
+import 'package:ml_image_store_app/presentation/widgets/button/clickable_box.dart';
 import 'package:ml_image_store_app/presentation/widgets/image_painter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -26,15 +31,17 @@ class _EditingImageTabState extends State<EditingImageTab> with TickerProviderSt
   ui.Image? image;
   ui.Size? canvasSize;
 
-  String? deletingFeatureId;
-
-  final List<Point> points = [];
+  String? selectedFeatureId;
 
   bool createdImage = false;
+  bool createdTool = false;
 
-  late final AnimationController deleteAnimationController = AnimationController(
+  OverlayEntry? featureOverlay;
+  Offset featureOverlayOffset = Offset.zero;
+
+  late final AnimationController selectAnimationController = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 300),
+    duration: const Duration(milliseconds: 200),
   );
 
   Future<void> _createImage(EditingState state) async {
@@ -57,237 +64,315 @@ class _EditingImageTabState extends State<EditingImageTab> with TickerProviderSt
 
   final nameTextController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+
+    selectAnimationController.addListener(() {
+      if (selectAnimationController.isDismissed && featureOverlay?.mounted == true) {
+        featureOverlay?.remove();
+      } else if (!(featureOverlay?.mounted ?? false)) {
+        featureOverlay = _createOverlay(context);
+        Overlay.of(context).insert(featureOverlay!);
+      }
+    });
+  }
+
   void _clear() {
     nameTextController.clear();
+    labelingTool.points = [];
+  }
+
+  void createLabelingTool(LabelType labelType) {
     setState(() {
-      points.clear();
+      createdTool = true;
+      labelingTool = switch (labelType) {
+        LabelType.bbox => BboxLabelingTool(),
+        LabelType.polygon => PolygonLabelingTool(),
+      };
     });
+  }
+
+  LabelingTool labelingTool = BboxLabelingTool();
+
+  @override
+  void dispose() {
+    if (featureOverlay?.mounted == true) {
+      featureOverlay?.remove();
+    }
+    featureOverlay?.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<ImageCreationBloc, ImageCreationState>(
-      buildWhen: (prev, curr) => curr is EditingState,
-      listenWhen: (prev, curr) => curr is EditingState && (prev is! EditingState || prev.image != curr.image),
-      listener: (context, s) {
-        final state = s as EditingState;
-        _createImage(state);
-      },
-      builder: (context, s) {
-        final state = s as EditingState;
-        if (!createdImage) {
-          _createImage(state);
-        }
-        return SafeArea(
-          child: Stack(
-            children: [
-              Column(
-                children: [
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(Dimens.md),
-                      child: image != null
-                          ? GestureDetector(
-                              onTapDown: (event) {
-                                final offset = convertToImageOffset(
-                                  event.localPosition,
-                                  ui.Size(image!.width.toDouble(), image!.height.toDouble()),
-                                  canvasSize!,
-                                );
-                                double distance = 0;
-                                Feature? nearestFeature;
-                                for (final feature in state.features) {
-                                  for (final point in feature.points) {
-                                    final p = point.offset;
-                                    final d = (offset - p).distance;
-                                    if ((d < distance || distance == 0) && d < 20) {
-                                      distance = d;
-                                      nearestFeature = feature;
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<ImageCreationBloc, ImageCreationState>(
+          listenWhen: (prev, curr) => curr is EditingState && (prev is! EditingState || prev.image != curr.image),
+          listener: (context, s) {
+            final state = s as EditingState;
+            _createImage(state);
+          },
+        ),
+        BlocListener<ImageCreationBloc, ImageCreationState>(
+          listenWhen: (prev, curr) =>
+              curr is EditingState && (curr.folder?.type != null || curr.folder?.type != prev.folder?.type),
+          listener: (context, s) {
+            final state = s as EditingState;
+            createLabelingTool(state.folder!.type);
+          },
+        ),
+      ],
+      child: BlocBuilder<ImageCreationBloc, ImageCreationState>(
+        buildWhen: (prev, curr) => curr is EditingState,
+        builder: (context, s) {
+          final state = s as EditingState;
+          if (!createdTool && state.folder?.type != null) {
+            WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+              createLabelingTool(state.folder!.type);
+            });
+          }
+          if (!createdImage) {
+            _createImage(state);
+          }
+          return SafeArea(
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(Dimens.md),
+                        child: image != null
+                            ? GestureDetector(
+                                onTapDown: (event) {
+                                  final offset = convertToImageOffset(
+                                    event.localPosition,
+                                    ui.Size(image!.width.toDouble(), image!.height.toDouble()),
+                                    canvasSize!,
+                                  );
+                                  double distance = 0;
+                                  Feature? nearestFeature;
+                                  for (final feature in state.features) {
+                                    for (final point in feature.points) {
+                                      final p = point.offset;
+                                      final d = (offset - p).distance;
+                                      if ((d < distance || distance == 0) && d < 20) {
+                                        distance = d;
+                                        nearestFeature = feature;
+                                      }
                                     }
                                   }
-                                }
-                                if (nearestFeature != null) {
-                                  deletingFeatureId = nearestFeature.id;
-                                  deleteAnimationController.forward(from: 0);
-                                } else if (state.folder?.type == LabelType.polygon) {
-                                  deleteAnimationController.stop();
-                                  deleteAnimationController.value = 0;
-                                  deletingFeatureId = null;
-                                  if (canvasSize == null) return;
-                                  final offset = convertToImageOffset(
-                                    event.localPosition,
-                                    ui.Size(image!.width.toDouble(), image!.height.toDouble()),
-                                    canvasSize!,
-                                  );
-                                  setState(() {
-                                    points.add(
-                                      Point(x: offset.dx.toInt(), y: offset.dy.toInt(), id: const Uuid().v4()),
+                                  if (nearestFeature != null) {
+                                    featureOverlayOffset = event.globalPosition;
+                                    selectedFeatureId = nearestFeature.id;
+                                    selectAnimationController.forward(from: 0);
+                                  } else {
+                                    if (canvasSize == null) return;
+                                    final offset = convertToImageOffset(
+                                      event.localPosition,
+                                      ui.Size(image!.width.toDouble(), image!.height.toDouble()),
+                                      canvasSize!,
                                     );
-                                  });
-                                }
-                              },
-                              onTapUp: (event) {
-                                if (deletingFeatureId != null && deleteAnimationController.isCompleted) {
-                                  context
-                                      .read<ImageCreationBloc>()
-                                      .add(ImageCreationEvent.removeFeature(deletingFeatureId!));
-                                  deleteAnimationController.stop();
-                                  deleteAnimationController.value = 0;
-                                }
-                              },
-                              onPanStart: (event) {
-                                if (state.folder?.type == LabelType.bbox) {
-                                  deleteAnimationController.stop();
-                                  deleteAnimationController.value = 0;
-                                  deletingFeatureId = null;
+                                    labelingTool.onTapDown(offset);
+                                  }
+                                },
+                                onTapUp: (event) {
                                   if (canvasSize == null) return;
                                   final offset = convertToImageOffset(
                                     event.localPosition,
                                     ui.Size(image!.width.toDouble(), image!.height.toDouble()),
                                     canvasSize!,
                                   );
-                                  setState(() {
-                                    if (state.folder?.type == LabelType.bbox) {
-                                      points.clear();
-                                    }
-                                    points
-                                        .add(Point(x: offset.dx.toInt(), y: offset.dy.toInt(), id: const Uuid().v4()));
-                                  });
-                                }
-                              },
-                              onPanUpdate: (event) {
-                                if (state.folder?.type == LabelType.bbox) {
+                                  labelingTool.onTapUp(offset);
+                                },
+                                onPanStart: (event) {
+                                  selectAnimationController.reverse();
                                   if (canvasSize == null) return;
                                   final offset = convertToImageOffset(
                                     event.localPosition,
                                     ui.Size(image!.width.toDouble(), image!.height.toDouble()),
                                     canvasSize!,
                                   );
-                                  setState(() {
-                                    if (points.length > 1) {
-                                      points.removeRange(1, points.length);
-                                    }
-                                    points.add(
-                                      Point(x: offset.dx.toInt(), y: offset.dy.toInt(), id: const Uuid().v4()),
-                                    );
-                                  });
-                                }
-                              },
-                              child: AnimatedBuilder(
-                                animation: deleteAnimationController,
-                                builder: (context, child) => CustomPaint(
-                                  painter: ImagePainter(
-                                    image!,
-                                    state.features,
-                                    labelType: state.folder?.type ?? LabelType.bbox,
-                                    points: points,
-                                    size: canvasSize,
-                                    sizeChanged: (size) {
-                                      canvasSize = size;
-                                    },
-                                    deletingFeatureId: deletingFeatureId,
-                                    deleteAnimationValue: deleteAnimationController.value,
+                                  labelingTool.onPanStart(offset);
+                                },
+                                onPanUpdate: (event) {
+                                  if (canvasSize == null) return;
+                                  final offset = convertToImageOffset(
+                                    event.localPosition,
+                                    ui.Size(image!.width.toDouble(), image!.height.toDouble()),
+                                    canvasSize!,
+                                  );
+                                  labelingTool.onPanUpdate(offset);
+                                },
+                                child: AnimatedBuilder(
+                                  animation: selectAnimationController,
+                                  builder: (context, child) => StreamBuilder<List<Point>>(
+                                    stream: labelingTool.watchPoints(),
+                                    builder: (context, snapshot) => CustomPaint(
+                                      painter: ImagePainter(
+                                        image!,
+                                        state.features,
+                                        labelType: state.folder?.type ?? LabelType.bbox,
+                                        points: snapshot.data ?? [],
+                                        size: canvasSize,
+                                        sizeChanged: (size) {
+                                          canvasSize = size;
+                                        },
+                                        selectedFeatureId: selectedFeatureId,
+                                        selectionProgress: selectAnimationController.value,
+                                      ),
+                                      child: const SizedBox.expand(),
+                                    ),
                                   ),
-                                  child: const SizedBox.expand(),
                                 ),
-                              ),
-                            )
-                          : const Center(child: CircularProgressIndicator()),
+                              )
+                            : const Center(child: CircularProgressIndicator()),
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: Dimens.md, right: Dimens.md, bottom: Dimens.md),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            _clear();
-                          },
-                          icon: const Icon(Icons.clear),
-                        ),
-                        Gap.md,
-                        Expanded(
-                          child: TextFormField(
-                            controller: nameTextController,
-                            decoration: const InputDecoration(labelText: 'Feature name'),
+                    Padding(
+                      padding: const EdgeInsets.only(left: Dimens.md, right: Dimens.md, bottom: Dimens.md),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              _clear();
+                            },
+                            icon: const Icon(Icons.clear),
                           ),
-                        ),
-                        Gap.md,
-                        IconButton(
-                          onPressed: points.isNotEmpty &&
-                                  (state.folder?.type == LabelType.polygon ||
-                                      (state.folder?.type == LabelType.bbox && points.length == 2))
-                              ? () {
-                                  context.read<ImageCreationBloc>().add(
-                                        ImageCreationEvent.addFeature(
-                                          Feature(
-                                            points: points.toList(),
-                                            className: nameTextController.text,
-                                            id: const Uuid().v4(),
-                                          ),
-                                        ),
-                                      );
-                                  _clear();
-                                }
-                              : null,
-                          icon: const Icon(Icons.add),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: Dimens.md, left: Dimens.md, right: Dimens.md),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: !state.sending
-                                ? () {
-                                    if (state.imageId == null) {
-                                      context
-                                          .read<ImageCreationBloc>()
-                                          .add(const ImageCreationEvent.backToPickRequested());
-                                    } else {
-                                      context.pop();
+                          Gap.md,
+                          Expanded(
+                            child: TextFormField(
+                              controller: nameTextController,
+                              decoration: const InputDecoration(labelText: 'Feature name'),
+                            ),
+                          ),
+                          Gap.md,
+                          StreamBuilder(
+                            stream: labelingTool.watchPoints(),
+                            builder: (context, _) => IconButton(
+                              onPressed: labelingTool.isValid
+                                  ? () {
+                                      context.read<ImageCreationBloc>().add(
+                                            ImageCreationEvent.addFeature(
+                                              Feature(
+                                                points: labelingTool.points.toList(),
+                                                className: nameTextController.text,
+                                                id: const Uuid().v4(),
+                                              ),
+                                            ),
+                                          );
+                                      _clear();
                                     }
-                                  }
-                                : null,
-                            child: const Text('Back'),
+                                  : null,
+                              icon: const Icon(Icons.add),
+                            ),
                           ),
-                        ),
-                        Gap.md,
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: !state.sending && state.features.isNotEmpty
-                                ? () {
-                                    context.read<ImageCreationBloc>().add(const ImageCreationEvent.pointsCleared());
-                                  }
-                                : null,
-                            child: const Text('Clear'),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: Dimens.md, left: Dimens.md, right: Dimens.md),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: !state.sending
+                                  ? () {
+                                      if (state.imageId == null) {
+                                        context
+                                            .read<ImageCreationBloc>()
+                                            .add(const ImageCreationEvent.backToPickRequested());
+                                      } else {
+                                        context.pop();
+                                      }
+                                    }
+                                  : null,
+                              child: const Text('Back'),
+                            ),
                           ),
-                        ),
-                        Gap.md,
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: !state.sending
-                                ? () {
-                                    context.read<ImageCreationBloc>().add(const ImageCreationEvent.sendRequested());
-                                  }
-                                : null,
-                            child: const Text('Send'),
+                          Gap.md,
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: !state.sending && state.features.isNotEmpty
+                                  ? () {
+                                      context.read<ImageCreationBloc>().add(const ImageCreationEvent.pointsCleared());
+                                    }
+                                  : null,
+                              child: const Text('Clear'),
+                            ),
                           ),
+                          Gap.md,
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: !state.sending
+                                  ? () {
+                                      context.read<ImageCreationBloc>().add(const ImageCreationEvent.sendRequested());
+                                    }
+                                  : null,
+                              child: const Text('Send'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+                if (state.sending) const Center(child: CircularProgressIndicator()),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  OverlayEntry _createOverlay(BuildContext screenContext) {
+    return OverlayEntry(
+      builder: (context) => Positioned(
+        width: 120,
+        top: featureOverlayOffset.dy,
+        left: featureOverlayOffset.dx,
+        child: TapRegion(
+          onTapOutside: (_) {
+            selectAnimationController.reverse();
+          },
+          child: ScaleTransition(
+            scale: CurveTween(curve: Curves.easeInOut).animate(selectAnimationController),
+            alignment: Alignment.center,
+            child: Material(
+              color: Colors.transparent,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(Dimens.sm),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: context.colors.primary.shade200),
+                    borderRadius: BorderRadius.circular(Dimens.sm),
+                    color: context.colors.background,
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        ClickableBox(
+                          onTap: () {
+                            screenContext
+                                .read<ImageCreationBloc>()
+                                .add(ImageCreationEvent.removeFeature(selectedFeatureId ?? ''));
+                            selectAnimationController.reverse();
+                          },
+                          child: const ListTile(title: Text('Delete')),
                         ),
                       ],
                     ),
-                  )
-                ],
+                  ),
+                ),
               ),
-              if (state.sending) const Center(child: CircularProgressIndicator()),
-            ],
+            ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
