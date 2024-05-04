@@ -41,7 +41,19 @@ class _FolderWidgetState extends State<FolderWidget> {
               ),
             ),
             appBar: AppBar(
-              title: Text(state.folder?.name ?? 'Folder'),
+              // title: Text(state.folder?.name ?? 'Folder'),
+              title: RichText(
+                text: TextSpan(
+                  style: context.theme.textTheme.titleLarge?.copyWith(
+                    color: context.colors.background,
+                    leadingDistribution: TextLeadingDistribution.even,
+                  ),
+                  children: [
+                    TextSpan(text: state.folder?.name ?? 'Folder'),
+                    if (state.folder?.type != null) TextSpan(text: ' | ${state.folder?.type.name}'),
+                  ],
+                ),
+              ),
               leading: IconButton(
                 onPressed: () => context.pop(),
                 icon: const Icon(Icons.arrow_back),
@@ -67,7 +79,7 @@ class _FolderWidgetState extends State<FolderWidget> {
                           final result = await context.showAppDialog<DatasetDownloadResult>(
                             child: DatasetDownloadDialog(labelType: state.folder?.type ?? LabelType.bbox),
                           );
-                          if (result == null) return;
+                          if (result == null || !context.mounted) return;
                           launchUrl(
                             Uri.parse(
                               '${context.read<ServerConfig>().baseUrl}/folders/${state.folder?.id}/download'

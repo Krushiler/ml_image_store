@@ -7,6 +7,7 @@ import 'package:ml_image_store_app/presentation/screens/auth/login/login_screen.
 import 'package:ml_image_store_app/presentation/screens/folder/folder_screen.dart';
 import 'package:ml_image_store_app/presentation/screens/home/home_screen.dart';
 import 'package:ml_image_store_app/presentation/screens/image_creation/image_creation_screen.dart';
+import 'package:ml_image_store_app/presentation/screens/settings/settings_screen.dart';
 import 'package:ml_image_store_app/presentation/util/go_router_refresh_stream.dart';
 
 class AppRouter {
@@ -29,6 +30,11 @@ class AppRouter {
         name: Routes.folders.name,
         pageBuilder: (context, state) => _page(const HomeScreen()),
         routes: [
+          GoRoute(
+            path: 'settings',
+            name: Routes.settings.name,
+            pageBuilder: (context, state) => _page(const SettingsScreen()),
+          ),
           GoRoute(
             path: ':id',
             name: Routes.folder.name,

@@ -4,6 +4,7 @@ import 'package:ml_image_store_app/data/model/server_config.dart';
 import 'package:ml_image_store_app/data/network/dio_factory.dart';
 import 'package:ml_image_store_app/data/network/ml_image_api.dart';
 import 'package:ml_image_store_app/data/repository/auth_repository.dart';
+import 'package:ml_image_store_app/data/repository/config_repository.dart';
 import 'package:ml_image_store_app/data/repository/folders_repository.dart';
 import 'package:ml_image_store_app/data/repository/images_repository.dart';
 import 'package:ml_image_store_app/data/storage/auth_storage.dart';
@@ -51,6 +52,7 @@ class AppModule extends StatelessWidget {
           ),
         ),
         RepositoryProvider(create: (context) => ImagesRepository(context.read())),
+        RepositoryProvider(create: (context) => ConfigRepository(context.read())),
 
         /// Interactor
         RepositoryProvider(create: (context) => AuthInteractor(context.read())),

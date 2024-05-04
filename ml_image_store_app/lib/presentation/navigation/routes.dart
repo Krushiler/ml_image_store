@@ -4,6 +4,7 @@ enum Routes {
   folder('folder'),
   createImage('createImage'),
   image('image'),
+  settings('settings'),
   ;
 
   final String name;

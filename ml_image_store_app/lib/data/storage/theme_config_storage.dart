@@ -7,5 +7,14 @@ class ThemeConfigStorage extends HiveJsonStorage<ThemeConfig> {
           key: 'theme_config',
           fromJson: ThemeConfig.fromJson,
           toJson: (e) => e.toJson(),
-        );
+        ) {
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    final value = await get();
+    if (value == null) {
+      await put(ThemeConfig.defaultTheme());
+    }
+  }
 }
