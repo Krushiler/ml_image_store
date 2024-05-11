@@ -45,7 +45,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> with SubscriptionBloc {
       emit(state.copyWith(isCreatingFolder: true));
       try {
         await _foldersRepository.deleteFolder(event.id);
-        add(const HomeEvent.loadFoldersRequested());
       } catch (e) {
         emit(state.copyWith(error: createErrorMessage(e)));
       }

@@ -24,7 +24,7 @@ class FoldersRepository {
       final folder = await _api.getFolder(id);
       final data = (await _storage.get())?.toList() ?? [];
       int? dataIndex;
-      for (var i = 0; i < data.length; i ++) {
+      for (var i = 0; i < data.length; i++) {
         if (data[i].id == folder.id) {
           dataIndex = i;
           break;
@@ -57,7 +57,10 @@ class FoldersRepository {
     return _api.createFolder(CreateFolderRequest(name: name, type: type.index));
   }
 
-  Future<void> deleteFolder(String id) {
-    return _api.deleteFolder(id);
+  Future<void> deleteFolder(String id) async {
+    await _api.deleteFolder(id);
+    final data = (await _storage.get())?.toList() ?? [];
+    data.removeWhere((element) => element.id == id);
+    _storage.put(data);
   }
 }
