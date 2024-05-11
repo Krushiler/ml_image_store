@@ -21,6 +21,18 @@ class FolderWidget extends StatefulWidget {
 }
 
 class _FolderWidgetState extends State<FolderWidget> {
+  final scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    scrollController.addListener(() {
+      if (scrollController.position.extentAfter < 500) {
+        context.read<FolderBloc>().add(const FolderEvent.loadMoreRequested());
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<FolderBloc, FolderState>(
@@ -97,6 +109,7 @@ class _FolderWidgetState extends State<FolderWidget> {
             body: Stack(
               children: [
                 GridView.builder(
+                  controller: scrollController,
                   padding: const EdgeInsets.all(Dimens.md),
                   gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                     maxCrossAxisExtent: 140,

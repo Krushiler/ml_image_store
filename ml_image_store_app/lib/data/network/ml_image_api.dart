@@ -5,7 +5,6 @@ import 'package:ml_image_store/request/create_folder_request.dart';
 import 'package:ml_image_store/request/login_request.dart';
 import 'package:ml_image_store/request/register_request.dart';
 import 'package:ml_image_store/response/auth_response.dart';
-import 'package:ml_image_store/response/folder_response.dart';
 import 'package:retrofit/retrofit.dart';
 
 part 'ml_image_api.g.dart';
@@ -27,7 +26,14 @@ abstract class MlImageApi {
   Future<List<Folder>> getFolders();
 
   @GET('/folders/{id}')
-  Future<FolderResponse> getFolder(@Path('id') String id);
+  Future<Folder> getFolder(@Path('id') String id);
+
+  @GET('/folders/{id}/images')
+  Future<List<Image>> getFolderImages(
+    @Path('id') String id, {
+    @Query('limit') int? limit,
+    @Query('offset') int? offset,
+  });
 
   @DELETE('/folders/{id}')
   Future<void> deleteFolder(@Path('id') String id);

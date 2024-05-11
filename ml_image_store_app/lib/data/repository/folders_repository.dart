@@ -1,17 +1,14 @@
 import 'package:collection/collection.dart';
 import 'package:ml_image_store/model/folder/folder.dart';
 import 'package:ml_image_store/request/create_folder_request.dart';
-import 'package:ml_image_store/response/folder_response.dart';
 import 'package:ml_image_store_app/data/network/ml_image_api.dart';
 import 'package:ml_image_store_app/data/storage/base/base_storage.dart';
-import 'package:ml_image_store_app/data/storage/folders_storage.dart';
 
 class FoldersRepository {
   final MlImageApi _api;
-  final FoldersStorage _storage;
-  final BaseStorage<List<FolderResponse>> _imagesStorage;
+  final BaseStorage<List<Folder>> _storage;
 
-  FoldersRepository(this._api, this._storage, this._imagesStorage);
+  FoldersRepository(this._api, this._storage);
 
   Future<void> fetchFolders() async {
     final folders = await _api.getFolders();
@@ -23,23 +20,28 @@ class FoldersRepository {
   }
 
   Future<void> fetchFolder(String id) async {
-    final folder = await _api.getFolder(id);
     try {
-      final storageData = await _imagesStorage.get();
-      if (storageData == null) {
-        await _imagesStorage.put([folder]);
-        return;
+      final folder = await _api.getFolder(id);
+      final data = (await _storage.get())?.toList() ?? [];
+      int? dataIndex;
+      for (var i = 0; i < data.length; i ++) {
+        if (data[i].id == folder.id) {
+          dataIndex = i;
+          break;
+        }
       }
-      final newList = storageData.where((element) => element.folder.id != folder.folder.id).toList();
-      await _imagesStorage.put([...newList, folder]);
-    } catch (e) {
-      await _imagesStorage.put([folder]);
-    }
+      if (dataIndex != null) {
+        data[dataIndex] = folder;
+      } else {
+        data.add(folder);
+      }
+      _storage.put(data);
+    } catch (_) {}
   }
 
   Future<Folder> getFolder(String id) async {
     final folder = await _getFolder(id);
-    return folder ?? (await _api.getFolder(id)).folder;
+    return folder ?? (await _api.getFolder(id));
   }
 
   Future<Folder?> _getFolder(String id) async {
@@ -47,8 +49,8 @@ class FoldersRepository {
     return folder;
   }
 
-  Stream<FolderResponse?> watchFolder(String id) => _imagesStorage.watch().map(
-        (event) => event?.where((element) => element.folder.id == id).firstOrNull,
+  Stream<Folder?> watchFolder(String id) => _storage.watch().map(
+        (event) => event?.where((element) => element.id == id).firstOrNull,
       );
 
   Future<void> createFolder(String name, LabelType type) {

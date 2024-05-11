@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:http/http.dart' as http;
 import 'package:ml_image_store/model/folder/folder.dart';
 import 'package:ml_image_store/model/image/feature.dart';
 import 'package:ml_image_store_app/data/model/server_config.dart';
@@ -9,7 +10,6 @@ import 'package:ml_image_store_app/data/repository/folders_repository.dart';
 import 'package:ml_image_store_app/data/repository/images_repository.dart';
 import 'package:ml_image_store_app/presentation/util/error_util.dart';
 import 'package:ml_image_store_app/presentation/util/image_util.dart';
-import 'package:http/http.dart' as http;
 
 part 'image_creation_bloc.freezed.dart';
 
