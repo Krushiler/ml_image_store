@@ -38,17 +38,19 @@ class FolderBloc extends Bloc<FolderEvent, FolderState> with SubscriptionBloc {
       }
     });
     on<_LoadFolderRequested>((event, emit) async {
+      emit(state.copyWith(isLoadingImages: true));
       try {
         await _imagesRepository.fetchImages(folderId, PagingParams(limit: state.limit, offset: state.offset));
       } catch (e) {
         emit(state.copyWith(error: createErrorMessage(e)));
       }
+      emit(state.copyWith(isLoadingImages: false));
     }, transformer: restartable());
     on<_FolderChanged>((event, emit) async {
-      emit(state.copyWith(folder: event.folder, isLoadingImages: false));
+      emit(state.copyWith(folder: event.folder));
     });
     on<_ImagesChanged>((event, emit) {
-      emit(state.copyWith(images: event.images, isLoadingImages: false));
+      emit(state.copyWith(images: event.images));
     });
     on<_DeleteImageRequested>((event, emit) async {
       emit(state.copyWith(isDeletingImage: true));

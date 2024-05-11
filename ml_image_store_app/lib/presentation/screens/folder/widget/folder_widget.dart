@@ -116,18 +116,31 @@ class _FolderWidgetState extends State<FolderWidget> {
                     mainAxisSpacing: Dimens.md,
                     crossAxisSpacing: Dimens.md,
                   ),
-                  itemCount: state.images.length,
-                  itemBuilder: (context, index) => ImageListItem(
-                    image: state.images[index],
-                    onPressed: () {
-                      context.navigation.navigateToImage(state.folderId, state.images[index].id);
-                    },
-                    onDeletePressed: () {
-                      context.read<FolderBloc>().add(FolderEvent.deleteImageRequested(state.images[index].id));
-                    },
-                  ),
+                  itemCount: state.isLoadingImages ? state.images.length + 1 : state.images.length,
+                  itemBuilder: (context, index) {
+                    if (index < state.images.length) {
+                      return ImageListItem(
+                        image: state.images[index],
+                        onPressed: () {
+                          context.navigation.navigateToImage(state.folderId, state.images[index].id);
+                        },
+                        onDeletePressed: () {
+                          context.read<FolderBloc>().add(FolderEvent.deleteImageRequested(state.images[index].id));
+                        },
+                      );
+                    } else {
+                      return Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(Dimens.sm),
+                          border: Border.all(color: context.colors.primary),
+                        ),
+                        alignment: Alignment.center,
+                        child: const CircularProgressIndicator(),
+                      );
+                    }
+                  },
                 ),
-                if (state.isLoading) const Center(child: CircularProgressIndicator()),
+                if (state.isDeletingImage) const Center(child: CircularProgressIndicator()),
               ],
             ),
           ),
