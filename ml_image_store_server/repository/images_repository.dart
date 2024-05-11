@@ -1,6 +1,7 @@
 import 'package:ml_image_store/model/image/feature.dart';
 import 'package:ml_image_store/model/image/image.dart';
 import 'package:ml_image_store/model/image/point.dart';
+import 'package:ml_image_store/model/paging/paging_params.dart';
 import 'package:uuid/uuid.dart';
 
 import '../database/storage.dart';
@@ -75,8 +76,8 @@ class ImagesRepository {
     return res;
   }
 
-  Future<List<Image>> getImages(String folderId) async {
-    final folders = await _storage.getFolderImages(folderId);
+  Future<List<Image>> getImages(String folderId, [PagingParams? pagingParams]) async {
+    final folders = await _storage.getFolderImages(folderId, pagingParams);
     final maps = folders.map((e) => e.toColumnMap());
     final images = <Image>[];
     for (final imageMap in maps) {

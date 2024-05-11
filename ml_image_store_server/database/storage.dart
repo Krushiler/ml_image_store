@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:ml_image_store/model/image/feature.dart';
 import 'package:ml_image_store/model/image/point.dart' as domain;
+import 'package:ml_image_store/model/paging/paging_params.dart';
 import 'package:postgres/postgres.dart';
 import 'package:uuid/uuid.dart';
 
@@ -31,13 +32,18 @@ class Storage {
     }
   }
 
-  Future<List<ResultRow>> getFolderImages(String folderId) async {
+  Future<List<ResultRow>> getFolderImages(String folderId, [PagingParams? pagingParams]) async {
     try {
       return execute((conn) async {
-        final rows = await conn.execute(
-          r'SELECT * FROM images WHERE folderId=$1',
-          parameters: [folderId],
-        );
+        final rows = pagingParams != null
+            ? await conn.execute(
+                r'SELECT * FROM images WHERE folderId=$1 ORDER BY createdat DESC LIMIT $2 OFFSET $3',
+                parameters: [folderId, pagingParams.limit, pagingParams.offset],
+              )
+            : await conn.execute(
+                r'SELECT * FROM images WHERE folderId=$1 ORDER BY createdat DESC',
+                parameters: [folderId],
+              );
         return rows;
       });
     } catch (_) {
