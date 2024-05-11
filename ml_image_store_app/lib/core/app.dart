@@ -22,11 +22,13 @@ class App extends StatelessWidget {
       builder: (context) => AppNavigationProvider(
         builder: (context) {
           final router = AppRouter(isAuthorized, context.read());
-          return MaterialApp.router(
-            scrollBehavior: const AppScrollBehavior(),
-            theme: AppTheme(context.watch<ThemeConfig>()).createTheme(),
-            routerConfig: router.router,
-            debugShowCheckedModeBanner: false,
+          return Builder(
+            builder: (context) => MaterialApp.router(
+              scrollBehavior: const AppScrollBehavior(),
+              theme: AppTheme(context.watch<ThemeConfig>()).createTheme(),
+              routerConfig: router.router,
+              debugShowCheckedModeBanner: false,
+            ),
           );
         },
       ),

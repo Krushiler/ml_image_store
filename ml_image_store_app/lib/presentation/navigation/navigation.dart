@@ -19,6 +19,8 @@ class Navigation {
       });
 
   void navigateToAuth() => context.goNamed(Routes.auth.name);
+
+  void navigateToSettings() => context.goNamed(Routes.settings.name);
 }
 
 extension NavigationExtension on BuildContext {

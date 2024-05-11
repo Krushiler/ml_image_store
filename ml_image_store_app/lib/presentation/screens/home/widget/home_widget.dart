@@ -5,6 +5,7 @@ import 'package:ml_image_store_app/presentation/screens/home/bloc/home_bloc.dart
 import 'package:ml_image_store_app/presentation/screens/home/widget/components/create_folder_dialog.dart';
 import 'package:ml_image_store_app/presentation/screens/home/widget/components/folder_list_item.dart';
 import 'package:ml_image_store_app/presentation/style/kit/dimens.dart';
+import 'package:ml_image_store_app/presentation/style/kit/gap.dart';
 import 'package:ml_image_store_app/presentation/style/theme/app_context_extension.dart';
 import 'package:ml_image_store_app/presentation/util/snackbar_util.dart';
 import 'package:ml_image_store_app/presentation/widgets/dialog/app_dialog.dart';
@@ -42,6 +43,13 @@ class _HomeWidgetState extends State<HomeWidget> {
             appBar: AppBar(
               title: const Text('Home'),
               actions: [
+                IconButton(
+                  onPressed: () {
+                    context.navigation.navigateToSettings();
+                  },
+                  icon: const Icon(Icons.settings),
+                ),
+                Gap.md,
                 IconButton(
                   onPressed: () {
                     context.read<HomeBloc>().add(const HomeEvent.logoutRequested());
